@@ -20,8 +20,7 @@ public class SimuladorPOSCINEX extends JDialog {
     private JLabel lblMensaje;
     private JLabel lblEstado;
     private JProgressBar barra;
-    private JButton btnProcesar;
-    private JButton btnRechazar;
+    private JButton btnPagar;
 
     public SimuladorPOSCINEX(JFrame padre, double monto, String metodoPago) {
         super(padre, "POS CINEX", true);
@@ -83,33 +82,21 @@ public class SimuladorPOSCINEX extends JDialog {
         lblEstado.setBounds(0, 292, 460, 25);
         root.add(lblEstado);
 
-        btnProcesar = new JButton("APROBAR PAGO");
-        btnProcesar.setBounds(55, 325, 160, 45);
-        btnProcesar.setBackground(AMARILLO);
-        btnProcesar.setForeground(new Color(3, 18, 45));
-        btnProcesar.setFont(new Font("Arial", Font.BOLD, 12));
-        btnProcesar.setFocusPainted(false);
-        btnProcesar.setBorderPainted(false);
-        btnProcesar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        root.add(btnProcesar);
+        btnPagar = new JButton("PAGAR");
+        btnPagar.setBounds(115, 325, 230, 45);
+        btnPagar.setBackground(AMARILLO);
+        btnPagar.setForeground(new Color(3, 18, 45));
+        btnPagar.setFont(new Font("Arial", Font.BOLD, 14));
+        btnPagar.setFocusPainted(false);
+        btnPagar.setBorderPainted(false);
+        btnPagar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        root.add(btnPagar);
 
-        btnRechazar = new JButton("RECHAZAR PAGO");
-        btnRechazar.setBounds(245, 325, 160, 45);
-        btnRechazar.setBackground(ROJO);
-        btnRechazar.setForeground(BLANCO);
-        btnRechazar.setFont(new Font("Arial", Font.BOLD, 12));
-        btnRechazar.setFocusPainted(false);
-        btnRechazar.setBorderPainted(false);
-        btnRechazar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        root.add(btnRechazar);
-
-        btnProcesar.addActionListener(e -> iniciarProcesoPOS());
-        btnRechazar.addActionListener(e -> rechazarPago());
+        btnPagar.addActionListener(e -> iniciarProcesoPOS());
     }
 
     private void iniciarProcesoPOS() {
-        btnProcesar.setEnabled(false);
-        btnRechazar.setEnabled(false);
+        btnPagar.setEnabled(false);
 
         Timer t1 = new Timer(700, e -> {
             lblMensaje.setText("Conectando con POS...");
@@ -153,20 +140,6 @@ public class SimuladorPOSCINEX extends JDialog {
         t4.start();
     }
 
-    private void rechazarPago() {
-        btnProcesar.setEnabled(false);
-        btnRechazar.setEnabled(false);
-
-        lblMensaje.setText("Pago rechazado.");
-        lblEstado.setForeground(ROJO);
-        lblEstado.setText("La operación fue rechazada por el POS.");
-        barra.setValue(100);
-        pagoAprobado = false;
-
-        Timer cerrar = new Timer(900, e -> dispose());
-        cerrar.setRepeats(false);
-        cerrar.start();
-    }
 
     public boolean isPagoAprobado() {
         return pagoAprobado;

@@ -44,7 +44,7 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
         this.usuarioActual = usuario == null || usuario.trim().isEmpty() ? "taquillero" : usuario.trim();
         this.peliculaSeleccionada = pelicula == null ? "" : pelicula.trim();
         cargarFuncionesDesdeBD();
-        setTitle("CINEX - Selección de Función");
+        setTitle("CINEX - Seleccionar función");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1280, 720, 1000, 650);
 
@@ -153,7 +153,7 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
 
     private JPanel crearPanelFunciones() {
         JPanel panel = new JPanel(); panel.setOpaque(false); panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        JLabel titulo = label("Seleccione la función", 27, Font.BOLD, BLANCO); JLabel subtitulo = label("Funciones programadas para hoy y mañana", 16, Font.PLAIN, GRIS);
+        JLabel titulo = label("Seleccionar función", 27, Font.BOLD, BLANCO); JLabel subtitulo = label("Funciones programadas para hoy y mañana", 16, Font.PLAIN, GRIS);
         JSeparator separador = new JSeparator(); separador.setMaximumSize(new Dimension(560, 2)); separador.setForeground(new Color(70, 100, 145)); separador.setAlignmentX(Component.LEFT_ALIGNMENT);
         listaFuncionesPanel = new JPanel(); listaFuncionesPanel.setOpaque(false); listaFuncionesPanel.setLayout(new BoxLayout(listaFuncionesPanel, BoxLayout.Y_AXIS)); listaFuncionesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         if (funcionesBD.isEmpty()) {

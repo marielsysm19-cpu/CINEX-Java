@@ -44,9 +44,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
     private DefaultTableModel modeloTabla;
     private JScrollPane scrollTabla;
 
-    private JLabel lblTotalClientes;
-    private JLabel lblDetalleSeleccionado;
-
     private ArrayList<Cliente> clientes = new ArrayList<>();
 
     public ClientesGerenteCINEXGUI() {
@@ -58,7 +55,7 @@ public class ClientesGerenteCINEXGUI extends JFrame {
 
         cargarClientesIniciales();
 
-        setTitle("CINEX - Lista de clientes");
+        setTitle("CINEX - Listar clientes");
         setSize(1280, 720);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -96,7 +93,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         cuerpo.add(crearContenido(), BorderLayout.CENTER);
         cuerpo.add(crearFooter(), BorderLayout.SOUTH);
 
-        fondo.add(crearSidebar(), BorderLayout.WEST);
         fondo.add(cuerpo, BorderLayout.CENTER);
 
         actualizarMensajeEstado();
@@ -123,114 +119,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         }
     }
 
-    private JPanel crearSidebar() {
-        JPanel sidebar = new SidebarPanel();
-        sidebar.setLayout(null);
-        sidebar.setPreferredSize(new Dimension(215, 900));
-
-        JLabel lblLogo = new JLabel();
-        lblLogo.setBounds(25, 15, 160, 75);
-        lblLogo.setIcon(cargarImagen("imagenes/logocinex.png", 150, 60));
-        sidebar.add(lblLogo);
-
-        SidebarButton btnReportesVentas = new SidebarButton("📄", "Reportes de ventas", false);
-        btnReportesVentas.setBounds(18, 110, 178, 58);
-        sidebar.add(btnReportesVentas);
-
-        SidebarButton btnHistorialVentas = new SidebarButton("🎟", "Historial de ventas", false);
-        btnHistorialVentas.setBounds(18, 178, 178, 58);
-        sidebar.add(btnHistorialVentas);
-
-        SidebarButton btnListaClientes = new SidebarButton("👥", "Lista de clientes", true);
-        btnListaClientes.setBounds(18, 246, 178, 58);
-        sidebar.add(btnListaClientes);
-
-        SidebarButton btnNotificaciones =
-                new SidebarButton(
-                        "🔔",
-                        "Notificaciones",
-                        false
-                );
-        btnNotificaciones.setBounds(
-                18,
-                314,
-                178,
-                58
-        );
-        sidebar.add(btnNotificaciones);
-
-        SidebarButton btnMenuPrincipal = new SidebarButton("≡", "Menú principal", false);
-        btnMenuPrincipal.setBounds(18, 672, 178, 52);
-        sidebar.add(btnMenuPrincipal);
-
-        JSeparator sep = new JSeparator();
-        sep.setBounds(20, 735, 175, 1);
-        sep.setForeground(new Color(35, 65, 105));
-        sidebar.add(sep);
-
-        SidebarButton btnCerrar = new SidebarButton("\u21A9", "Cerrar sesión", false);
-        btnCerrar.setBounds(18, 755, 178, 52);
-        sidebar.add(btnCerrar);
-
-        btnReportesVentas.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new ReportesGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnHistorialVentas.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new VentasGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnNotificaciones.addMouseListener(
-                new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(
-                            MouseEvent e
-                    ) {
-                        CINEXTransiciones.cambiar(
-                                ClientesGerenteCINEXGUI.this,
-                                new NotificacionesGerenteCINEXGUI(
-                                        usuarioActual
-                                )
-                        );
-                    }
-                }
-        );
-
-        btnMenuPrincipal.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new MenuGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnCerrar.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int opcion = JOptionPane.showConfirmDialog(
-                        ClientesGerenteCINEXGUI.this,
-                        "¿Deseas cerrar sesión?",
-                        "Confirmar cierre de sesión",
-                        JOptionPane.YES_NO_OPTION
-                );
-
-                if (opcion == JOptionPane.YES_OPTION) {
-                    new LoginCINEXGUI().setVisible(true);
-                    dispose();
-                }
-            }
-        });
-
-        return sidebar;
-    }
 
     private JPanel crearHeader() {
         JPanel header = new JPanel(new BorderLayout());
@@ -293,10 +181,9 @@ public class ClientesGerenteCINEXGUI extends JFrame {
                 new EmptyBorder(15, 20, 15, 20)
         );
 
-        JPanel main = new JPanel(new BorderLayout(28, 0));
+        JPanel main = new JPanel(new BorderLayout());
         main.setOpaque(false);
         main.add(crearPanelClientes(), BorderLayout.CENTER);
-        main.add(crearPanelDetalle(), BorderLayout.EAST);
 
         contenido.add(main, BorderLayout.CENTER);
         return contenido;
@@ -307,7 +194,7 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Lista de clientes");
+        JLabel titulo = new JLabel("Listar clientes");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 34));
         titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -426,85 +313,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
             }
         });
 
-        tablaClientes.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                cargarClienteSeleccionado();
-            }
-        });
-
-        return panel;
-    }
-
-    private JPanel crearPanelDetalle() {
-        RoundedPanel panel = new RoundedPanel(20, new Color(5, 18, 43, 175));
-        panel.setLayout(null);
-        panel.setPreferredSize(new Dimension(340, 560));
-        panel.setBorder(new LineBorder(AZUL_BORDE, 1, true));
-
-        JLabel titulo = new JLabel("Resumen");
-        titulo.setForeground(BLANCO);
-        titulo.setFont(new Font("Arial", Font.BOLD, 28));
-        titulo.setBounds(32, 32, 250, 35);
-        panel.add(titulo);
-
-        JLabel subtitulo = new JLabel("Clientes registrados por compra");
-        subtitulo.setForeground(GRIS);
-        subtitulo.setFont(new Font("Arial", Font.PLAIN, 15));
-        subtitulo.setBounds(32, 68, 250, 25);
-        panel.add(subtitulo);
-
-        JPanel linea = new JPanel();
-        linea.setBackground(AMARILLO);
-        linea.setBounds(32, 105, 70, 4);
-        panel.add(linea);
-
-        lblTotalClientes = new JLabel("Total clientes: " + clientes.size());
-        lblTotalClientes.setForeground(AMARILLO);
-        lblTotalClientes.setFont(new Font("Arial", Font.BOLD, 20));
-        lblTotalClientes.setBounds(32, 145, 260, 35);
-        panel.add(lblTotalClientes);
-
-        JLabel nota = new JLabel("<html>Este módulo es solo para consulta del gerente. No registra clientes manualmente.</html>");
-        nota.setForeground(GRIS);
-        nota.setFont(new Font("Arial", Font.PLAIN, 14));
-        nota.setBounds(32, 195, 270, 70);
-        panel.add(nota);
-
-        JSeparator separador = new JSeparator();
-        separador.setForeground(new Color(70, 100, 145));
-        separador.setBounds(32, 300, 270, 1);
-        panel.add(separador);
-
-        lblDetalleSeleccionado = new JLabel("<html>Cliente seleccionado:<br>Ninguno</html>");
-        lblDetalleSeleccionado.setForeground(BLANCO);
-        lblDetalleSeleccionado.setFont(new Font("Arial", Font.BOLD, 15));
-        lblDetalleSeleccionado.setBounds(32, 330, 270, 120);
-        panel.add(lblDetalleSeleccionado);
-
-        JButton btnActualizar = crearBotonPrincipal("ACTUALIZAR LISTA");
-        btnActualizar.setBounds(32, 480, 270, 48);
-        btnActualizar.addActionListener(e -> {
-            cargarClientesIniciales();
-            cargarTabla(clientes);
-            lblTotalClientes.setText("Total clientes: " + clientes.size());
-            lblDetalleSeleccionado.setText("<html>Cliente seleccionado:<br>Ninguno</html>");
-            actualizarMensajeEstado();
-        });
-        panel.add(btnActualizar);
-
-        panel.addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                btnActualizar.setBounds(
-                        32,
-                        Math.max(480, panel.getHeight() - 78),
-                        270,
-                        48
-                );
-            }
-        });
-
         return panel;
     }
 
@@ -513,7 +321,14 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         footer.setOpaque(false);
         footer.setBorder(new EmptyBorder(10, 25, 25, 25));
 
-        JButton btnAtras = crearBotonSecundario("ATRÁS");
+        JButton btnAtras = new JButton("MENÚ GERENTE");
+        btnAtras.setPreferredSize(new Dimension(180, 44));
+        btnAtras.setBackground(new Color(0, 80, 160));
+        btnAtras.setForeground(BLANCO);
+        btnAtras.setFont(new Font("Arial", Font.BOLD, 13));
+        btnAtras.setFocusPainted(false);
+        btnAtras.setBorderPainted(false);
+        btnAtras.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         btnAtras.addActionListener(e -> {
             dispose();
@@ -566,7 +381,7 @@ public class ClientesGerenteCINEXGUI extends JFrame {
             }
         };
 
-        btn.setPreferredSize(new Dimension(150, 48));
+        btn.setPreferredSize(new Dimension(180, 44));
         btn.setForeground(BLANCO);
         btn.setFont(new Font("Arial", Font.BOLD, 14));
         btn.setFocusPainted(false);
@@ -648,27 +463,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         }
 
         cargarTabla(resultado);
-    }
-
-    private void cargarClienteSeleccionado() {
-        int filaVista = tablaClientes.getSelectedRow();
-
-        if (filaVista == -1) {
-            return;
-        }
-
-        int fila = tablaClientes.convertRowIndexToModel(filaVista);
-
-        String tipo = modeloTabla.getValueAt(fila, 0).toString();
-        String documento = modeloTabla.getValueAt(fila, 1).toString();
-        String nombre = modeloTabla.getValueAt(fila, 2).toString();
-
-        lblDetalleSeleccionado.setText(
-                "<html>Cliente seleccionado:<br><br>" +
-                        "<b>" + nombre + "</b><br>" +
-                        tipo + ": " + documento +
-                        "</html>"
-        );
     }
 
     private void actualizarMensajeEstado() {

@@ -120,11 +120,11 @@ public class MenuTaquilleroCINEXGUI extends JFrame {
         gridPanel.setPreferredSize(new Dimension(1050, 470));
         gridPanel.setMaximumSize(new Dimension(1050, 470));
 
-        MenuCard btnVenta = new MenuCard("🎟", "Venta de Entradas", true);
-        MenuCard btnConsultarPeliculas = new MenuCard("🎬", "Consultar Películas", false);
-        MenuCard btnRegistroCliente = new MenuCard("👤", "Registro de Cliente", false);
-        MenuCard btnHistorial = new MenuCard("🧾", "Historial de Compras", false);
-        MenuCard btnReembolso = new MenuCard("💵", "Reembolso de Entradas", false);
+        MenuCard btnVenta = new MenuCard("🎟", "Venta de entrada", true);
+        MenuCard btnConsultarPeliculas = new MenuCard("🎬", "Consultar película", false);
+        MenuCard btnRegistroCliente = new MenuCard("👤", "Búsqueda o registro de cliente", false);
+        MenuCard btnHistorial = new MenuCard("🧾", "Historial de compras", false);
+        MenuCard btnReembolso = new MenuCard("💵", "Reembolso de entradas", false);
         MenuCard btnCerrar = new MenuCard("↩", "Cerrar Sesión", false);
 
         gridPanel.add(btnVenta);

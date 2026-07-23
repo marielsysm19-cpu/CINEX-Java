@@ -29,9 +29,9 @@ public class SidebarConsultaCINEX extends JPanel {
 
     private void construir() {
         String[] pasos = {
-                "1. Consultar películas",
+                "1. Consultar película",
                 "2. Consultar funciones",
-                "3. Consultar asientos"
+                "3. Consultar mapa de asientos"
         };
 
         JPanel contenedorPasos = new JPanel();

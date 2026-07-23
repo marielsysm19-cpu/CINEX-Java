@@ -43,7 +43,7 @@ public class NotificacionesGerenteCINEXGUI extends JFrame {
                 ? "gerente"
                 : usuario.trim();
 
-        setTitle("CINEX - Notificaciones de cambios");
+        setTitle("CINEX - Visualizar notificaciones de reembolso");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1366, 768);
         setMinimumSize(new Dimension(1100, 680));
@@ -70,7 +70,7 @@ public class NotificacionesGerenteCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Notificaciones de cambios");
+        JLabel titulo = new JLabel("Visualizar notificaciones de reembolso");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 34));
 
@@ -259,19 +259,13 @@ public class NotificacionesGerenteCINEXGUI extends JFrame {
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
 
-        JLabel regla = new JLabel(
-                "La autorización solo habilita el proceso; "
-                        + "el cliente debe acercarse a taquilla."
-        );
-        regla.setForeground(GRIS);
-        regla.setFont(new Font("Arial", Font.PLAIN, 13));
-
         JButton btnMenu = crearBoton(
                 "MENÚ GERENTE",
                 new Color(0, 80, 160),
                 BLANCO,
                 180
         );
+        btnMenu.setPreferredSize(new Dimension(180, 44));
         btnMenu.addActionListener(e ->
                 CINEXTransiciones.cambiar(
                         this,
@@ -279,8 +273,14 @@ public class NotificacionesGerenteCINEXGUI extends JFrame {
                 )
         );
 
-        footer.add(regla, BorderLayout.WEST);
-        footer.add(btnMenu, BorderLayout.EAST);
+        JLabel regla = new JLabel(
+                "La autorización solo habilita el proceso; el cliente debe acercarse a taquilla."
+        );
+        regla.setForeground(GRIS);
+        regla.setFont(new Font("Arial", Font.PLAIN, 13));
+
+        footer.add(btnMenu, BorderLayout.WEST);
+        footer.add(regla, BorderLayout.EAST);
         return footer;
     }
 

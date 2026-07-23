@@ -93,6 +93,7 @@ public class ReportesGerenteCINEXGUI extends JFrame {
     private JButton btnExportarExcel;
     private JButton btnCalInicio;
     private JButton btnCalFin;
+    private JButton btnMenuGerente;
     private JTable tablaResultados;
     private DefaultTableModel modelo;
     private GraficoBarrasPanel graficoPanel;
@@ -117,7 +118,7 @@ public class ReportesGerenteCINEXGUI extends JFrame {
     public ReportesGerenteCINEXGUI(String usuario) {
         this.usuarioActual = usuario == null || usuario.trim().isEmpty() ? "gerente" : usuario.trim();
 
-        setTitle("CINEX - Reportes de ventas");
+        setTitle("CINEX - Visualizar reporte de ventas");
         setSize(1280, 720);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -129,7 +130,6 @@ public class ReportesGerenteCINEXGUI extends JFrame {
         root.setLayout(null);
         setContentPane(root);
 
-        crearSidebar(root);
         crearCabecera(root);
         crearFiltros(root);
         crearIndicadores(root);
@@ -171,9 +171,8 @@ public class ReportesGerenteCINEXGUI extends JFrame {
             return;
         }
 
-        final int anchoSidebar = 215;
-        final int xContenido = 255;
-        final int margenDerecho = 40;
+        final int xContenido = 35;
+        final int margenDerecho = 35;
         final int separacion = 25;
 
         int anchoContenido = Math.max(
@@ -181,12 +180,6 @@ public class ReportesGerenteCINEXGUI extends JFrame {
                 ancho - xContenido - margenDerecho
         );
 
-        for (Component componente : rootReportes.getComponents()) {
-            if (componente instanceof SidebarPanel) {
-                componente.setBounds(0, 0, anchoSidebar, alto);
-                break;
-            }
-        }
 
         panelFiltrosReportes.setBounds(
                 xContenido,
@@ -220,8 +213,8 @@ public class ReportesGerenteCINEXGUI extends JFrame {
 
         int yResultados = 420;
         int altoResultados = Math.max(
-                255,
-                alto - yResultados - 65
+                200,
+                alto - yResultados - 120
         );
 
         int anchoTabla = Math.max(
@@ -251,6 +244,10 @@ public class ReportesGerenteCINEXGUI extends JFrame {
         );
 
         ajustarFiltrosReportes();
+
+        if (btnMenuGerente != null) {
+            btnMenuGerente.setBounds(35, Math.max(10, alto - 62), 180, 44);
+        }
 
         rootReportes.revalidate();
         rootReportes.repaint();
@@ -349,108 +346,6 @@ public class ReportesGerenteCINEXGUI extends JFrame {
         panelFiltrosReportes.repaint();
     }
 
-    private void crearSidebar(JPanel root) {
-        JPanel sidebar = new SidebarPanel();
-        sidebar.setLayout(null);
-        sidebar.setBounds(0, 0, 215, 1000);
-        root.add(sidebar);
-
-        JLabel lblLogo = new JLabel();
-        lblLogo.setBounds(25, 15, 160, 75);
-        lblLogo.setIcon(loadScaledIcon("imagenes/logocinex.png", 150, 60));
-        sidebar.add(lblLogo);
-
-        SidebarButton btnReportesVentas = new SidebarButton("📄", "Reportes de ventas", true);
-        btnReportesVentas.setBounds(18, 110, 178, 58);
-        sidebar.add(btnReportesVentas);
-
-        SidebarButton btnHistorialVentas = new SidebarButton("🎟", "Historial de ventas", false);
-        btnHistorialVentas.setBounds(18, 178, 178, 58);
-        sidebar.add(btnHistorialVentas);
-
-        SidebarButton btnListaClientes = new SidebarButton("👥", "Lista de clientes", false);
-        btnListaClientes.setBounds(18, 246, 178, 58);
-        sidebar.add(btnListaClientes);
-
-        SidebarButton btnNotificaciones =
-                new SidebarButton(
-                        "🔔",
-                        "Notificaciones",
-                        false
-                );
-        btnNotificaciones.setBounds(
-                18,
-                314,
-                178,
-                58
-        );
-        sidebar.add(btnNotificaciones);
-
-        SidebarButton btnMenuPrincipal = new SidebarButton("≡", "Menú principal", false);
-        btnMenuPrincipal.setBounds(18, 672, 178, 52);
-        sidebar.add(btnMenuPrincipal);
-
-        JSeparator sep = new JSeparator();
-        sep.setBounds(20, 735, 175, 1);
-        sep.setForeground(new Color(35, 65, 105));
-        sidebar.add(sep);
-
-        SidebarButton btnCerrar = new SidebarButton("\u21A9", "Cerrar sesión", false);
-        btnCerrar.setBounds(18, 755, 178, 52);
-        sidebar.add(btnCerrar);
-
-        btnHistorialVentas.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                new VentasGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnListaClientes.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                new ClientesGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnNotificaciones.addMouseListener(
-                new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(
-                            MouseEvent e
-                    ) {
-                        CINEXTransiciones.cambiar(
-                                ReportesGerenteCINEXGUI.this,
-                                new NotificacionesGerenteCINEXGUI(
-                                        usuarioActual
-                                )
-                        );
-                    }
-                }
-        );
-
-        btnMenuPrincipal.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                new MenuGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnCerrar.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                int opcion = JOptionPane.showConfirmDialog(
-                        ReportesGerenteCINEXGUI.this,
-                        "¿Deseas cerrar sesión?",
-                        "Confirmar cierre de sesión",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (opcion == JOptionPane.YES_OPTION) {
-                    new LoginCINEXGUI().setVisible(true);
-                    dispose();
-                }
-            }
-        });
-    }
 
     private void crearCabecera(JPanel root) {
         Rectangle pantalla = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
@@ -472,16 +367,30 @@ public class ReportesGerenteCINEXGUI extends JFrame {
         lblFecha.setBounds(topX + 460, 18, 160, 25);
         root.add(lblFecha);
 
-        JLabel lblTitulo = new JLabel("Reportes de ventas");
+        btnMenuGerente = new JButton("MENÚ GERENTE");
+        btnMenuGerente.setBounds(35, 820, 180, 44);
+        btnMenuGerente.setBackground(new Color(0, 80, 160));
+        btnMenuGerente.setForeground(BLANCO);
+        btnMenuGerente.setFont(new Font("Arial", Font.BOLD, 13));
+        btnMenuGerente.setFocusPainted(false);
+        btnMenuGerente.setBorderPainted(false);
+        btnMenuGerente.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnMenuGerente.addActionListener(e -> {
+            new MenuGerenteCINEXGUI(usuarioActual).setVisible(true);
+            dispose();
+        });
+        root.add(btnMenuGerente);
+
+        JLabel lblTitulo = new JLabel("Visualizar reporte de ventas");
         lblTitulo.setForeground(BLANCO);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 34));
-        lblTitulo.setBounds(255, 78, 380, 40);
+        lblTitulo.setBounds(35, 78, 380, 40);
         root.add(lblTitulo);
 
         JLabel lblSubtitulo = new JLabel("Consulte reportes de ventas, ingresos y películas más vistas");
         lblSubtitulo.setForeground(GRIS);
         lblSubtitulo.setFont(new Font("Arial", Font.PLAIN, 17));
-        lblSubtitulo.setBounds(257, 118, 560, 25);
+        lblSubtitulo.setBounds(37, 118, 650, 25);
         root.add(lblSubtitulo);
     }
 

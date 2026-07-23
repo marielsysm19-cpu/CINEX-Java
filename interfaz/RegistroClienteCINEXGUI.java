@@ -58,7 +58,7 @@ public class RegistroClienteCINEXGUI extends JFrame {
     public RegistroClienteCINEXGUI(String usuario) {
         this.usuarioActual = usuario;
 
-        setTitle("CINEX - Registro de cliente");
+        setTitle("CINEX - Búsqueda o registro de cliente");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1366, 768, 1120, 680);
 
@@ -162,7 +162,7 @@ public class RegistroClienteCINEXGUI extends JFrame {
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Registro de cliente");
+        JLabel titulo = new JLabel("Búsqueda o registro de cliente");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 34));
         titulo.setAlignmentX(Component.LEFT_ALIGNMENT);

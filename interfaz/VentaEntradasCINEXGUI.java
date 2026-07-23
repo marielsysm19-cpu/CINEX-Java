@@ -47,7 +47,7 @@ public class VentaEntradasCINEXGUI extends JFrame {
     public VentaEntradasCINEXGUI(String usuario) {
         this.usuarioActual = usuario;
 
-        setTitle("CINEX - Consultar Películas");
+        setTitle("CINEX - Elegir película");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1420, 830, 1000, 650);
 
@@ -187,7 +187,7 @@ public class VentaEntradasCINEXGUI extends JFrame {
         panel.setMaximumSize(new Dimension(2000, 115));
         panel.setBorder(new LineBorder(new Color(55, 84, 128), 1, true));
 
-        JLabel titulo = new JLabel("Consultar películas");
+        JLabel titulo = new JLabel("Elegir película");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 26));
         titulo.setBounds(32, 18, 500, 34);
@@ -213,7 +213,7 @@ public class VentaEntradasCINEXGUI extends JFrame {
         panel.setOpaque(false);
         panel.setMaximumSize(new Dimension(2000, 40));
 
-        JLabel titulo = new JLabel("Elija una película");
+        JLabel titulo = new JLabel("Elegir película");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 30));
         panel.add(titulo);

@@ -45,7 +45,7 @@ public class DashboardGerenteCINEXGUI extends JFrame {
                 ? "gerente"
                 : usuario.trim();
 
-        setTitle("CINEX - Dashboard Gerente");
+        setTitle("CINEX - Visualizar dashboard");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1366, 768);
         setMinimumSize(new Dimension(1100, 680));
@@ -71,7 +71,7 @@ public class DashboardGerenteCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Dashboard Gerente");
+        JLabel titulo = new JLabel("Visualizar dashboard");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 34));
 
@@ -92,16 +92,7 @@ public class DashboardGerenteCINEXGUI extends JFrame {
         usuario.setForeground(BLANCO);
         usuario.setFont(new Font("Arial", Font.BOLD, 14));
 
-        JButton refrescar = crearBoton(
-                "REFRESCAR",
-                new Color(0, 80, 160),
-                BLANCO,
-                140
-        );
-        refrescar.addActionListener(e -> cargarDashboard());
-
         acciones.add(usuario);
-        acciones.add(refrescar);
 
         panel.add(textos, BorderLayout.WEST);
         panel.add(acciones, BorderLayout.EAST);
@@ -163,12 +154,6 @@ public class DashboardGerenteCINEXGUI extends JFrame {
                 lblTotales,
                 "Toda la compra fue devuelta",
                 ROJO
-        ));
-        tarjetas.add(crearTarjeta(
-                "Decisiones pendientes",
-                lblPendientes,
-                "Cambios aún no revisados por el gerente",
-                AMARILLO
         ));
 
         contenido.add(tarjetas, BorderLayout.NORTH);
@@ -299,34 +284,13 @@ public class DashboardGerenteCINEXGUI extends JFrame {
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
 
-        JLabel nota = new JLabel(
-                "Ventas netas = ventas brutas - monto reembolsado."
-        );
-        nota.setForeground(GRIS);
-        nota.setFont(new Font("Arial", Font.PLAIN, 13));
-
-        JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        acciones.setOpaque(false);
-
-        JButton notificaciones = crearBoton(
-                "NOTIFICACIONES",
-                new Color(35, 105, 175),
-                BLANCO,
-                175
-        );
-        notificaciones.addActionListener(e ->
-                CINEXTransiciones.cambiar(
-                        this,
-                        new NotificacionesGerenteCINEXGUI(usuarioActual)
-                )
-        );
-
         JButton menu = crearBoton(
                 "MENÚ GERENTE",
                 new Color(0, 80, 160),
                 BLANCO,
-                170
+                180
         );
+        menu.setPreferredSize(new Dimension(180, 44));
         menu.addActionListener(e ->
                 CINEXTransiciones.cambiar(
                         this,
@@ -334,11 +298,14 @@ public class DashboardGerenteCINEXGUI extends JFrame {
                 )
         );
 
-        acciones.add(notificaciones);
-        acciones.add(menu);
+        JLabel nota = new JLabel(
+                "Ventas netas = ventas brutas - monto reembolsado."
+        );
+        nota.setForeground(GRIS);
+        nota.setFont(new Font("Arial", Font.PLAIN, 13));
 
-        footer.add(nota, BorderLayout.WEST);
-        footer.add(acciones, BorderLayout.EAST);
+        footer.add(menu, BorderLayout.WEST);
+        footer.add(nota, BorderLayout.EAST);
         return footer;
     }
 
@@ -388,11 +355,6 @@ public class DashboardGerenteCINEXGUI extends JFrame {
             lblTotales.setText(
                     String.valueOf(
                             resumen.getReembolsosTotales()
-                    )
-            );
-            lblPendientes.setText(
-                    String.valueOf(
-                            resumen.getNotificacionesPendientes()
                     )
             );
 

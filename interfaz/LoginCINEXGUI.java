@@ -66,7 +66,7 @@ public class LoginCINEXGUI extends JFrame {
         JLabel lblLogo = new JLabel(loadScaledIcon("imagenes/logocinex.png", 315, 115));
         lblLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitulo = new JLabel("Iniciar sesión");
+        JLabel lblTitulo = new JLabel("Login");
         lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 30));
         lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);

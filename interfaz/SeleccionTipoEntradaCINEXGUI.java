@@ -75,7 +75,7 @@ public class SeleccionTipoEntradaCINEXGUI extends JFrame {
 
         cargarPreciosDesdeBD();
 
-        setTitle("CINEX - Lista de precios");
+        setTitle("CINEX - Seleccionar tipo de entrada");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1366, 768, 1000, 650);
 
@@ -183,7 +183,7 @@ public class SeleccionTipoEntradaCINEXGUI extends JFrame {
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Lista de precios");
+        JLabel titulo = new JLabel("Seleccionar tipo de entrada");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 34));
         titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -205,7 +205,7 @@ public class SeleccionTipoEntradaCINEXGUI extends JFrame {
         lista.setMaximumSize(new Dimension(760, 500));
         lista.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel encabezado = new JLabel("Seleccione sus entradas");
+        JLabel encabezado = new JLabel("Seleccionar tipo de entrada");
         encabezado.setForeground(BLANCO);
         encabezado.setFont(new Font("Arial", Font.BOLD, 24));
         encabezado.setBounds(32, 25, 500, 34);

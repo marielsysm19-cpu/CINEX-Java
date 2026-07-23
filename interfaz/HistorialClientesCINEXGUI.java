@@ -74,7 +74,7 @@ public class HistorialClientesCINEXGUI extends JFrame {
     public HistorialClientesCINEXGUI(String usuario) {
         this.usuarioActual = usuario == null || usuario.trim().isEmpty() ? "taquillero" : usuario.trim();
 
-        setTitle("CINEX - Historial de compras de clientes");
+        setTitle("CINEX - Historial de compras");
         setSize(1366, 768);
         setMinimumSize(new Dimension(1280, 720));
         setLocationRelativeTo(null);
@@ -171,7 +171,7 @@ public class HistorialClientesCINEXGUI extends JFrame {
         panel.setPreferredSize(new Dimension(355, 0));
         panel.setBorder(new LineBorder(new Color(80, 105, 145), 1, true));
 
-        JLabel titulo = new JLabel("Historial de clientes");
+        JLabel titulo = new JLabel("Buscar clientes");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 26));
         titulo.setBounds(25, 28, 290, 35);
@@ -300,7 +300,7 @@ public class HistorialClientesCINEXGUI extends JFrame {
         textoTitulo.setOpaque(false);
         textoTitulo.setLayout(new BoxLayout(textoTitulo, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Historial de compras");
+        JLabel titulo = new JLabel("Listar compras del cliente");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 30));
         titulo.setAlignmentX(Component.LEFT_ALIGNMENT);

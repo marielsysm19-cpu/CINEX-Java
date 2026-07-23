@@ -78,7 +78,7 @@ public class SeleccionAsientosCINEXGUI extends JFrame {
         cargarAsientosOcupados();
         cargarTiposEntradaDesdeBD();
 
-        setTitle("CINEX - Gestionar selección de asientos");
+        setTitle("CINEX - Seleccionar asientos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1400, 820, 1000, 650);
 
@@ -356,7 +356,7 @@ public class SeleccionAsientosCINEXGUI extends JFrame {
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Gestionar selección de asientos");
+        JLabel titulo = new JLabel("Seleccionar asientos");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 30));
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);

@@ -107,7 +107,7 @@ public class PagoCINEXGUI extends JFrame {
         );
         this.pagoGenerado = ControlGestionarPagoCINEX.registrarMetodoPago(metodoSeleccionado, totalPagar);
 
-        setTitle("CINEX - Pago de entradas");
+        setTitle("CINEX - Pago de entrada");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1366, 768, 1000, 650);
 
@@ -197,7 +197,7 @@ public class PagoCINEXGUI extends JFrame {
         panelCentral.setOpaque(false);
         panelCentral.setLayout(new BoxLayout(panelCentral, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Gestionar pago de entradas");
+        JLabel titulo = new JLabel("Pago de entrada");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 32));
         titulo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -303,7 +303,7 @@ public class PagoCINEXGUI extends JFrame {
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setBorder(new LineBorder(new Color(80, 105, 145), 1, true));
 
-        JLabel titulo = new JLabel("Resumen de compra");
+        JLabel titulo = new JLabel("Resumen compra");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 23));
         titulo.setBounds(32, 22, 300, 30);
@@ -715,24 +715,6 @@ public class PagoCINEXGUI extends JFrame {
     }
 
     private void confirmarOperacion() {
-        int respuesta = JOptionPane.showConfirmDialog(
-                this,
-                "Pago validado correctamente. ¿Desea confirmar la operación?",
-                "Confirmar operación",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-
-        if (respuesta != JOptionPane.YES_OPTION) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    "Operación no confirmada.",
-                    "Operación cancelada",
-                    JOptionPane.INFORMATION_MESSAGE
-            );
-            return;
-        }
-
         registrarVentaComoPagada();
     }
 
@@ -818,13 +800,6 @@ public class PagoCINEXGUI extends JFrame {
                     pagoGenerado = pago;
                     entradasResumen = entradasPagadas;
                     numeroVentaRegistrada = numeroVenta;
-
-                    JOptionPane.showMessageDialog(
-                            PagoCINEXGUI.this,
-                            "Pago aprobado y venta registrada automáticamente. El comprobante puede generarse después.",
-                            "Venta registrada",
-                            JOptionPane.INFORMATION_MESSAGE
-                    );
 
                     abrirConfirmacion();
 

@@ -54,7 +54,7 @@ public class ConsultarDisponibilidadAsientosCINEXGUI extends JFrame {
         this.peliculaSeleccionada = pelicula == null ? new PeliculaCINEX(0, "Película") : pelicula;
         this.funcionSeleccionada = funcion;
 
-        setTitle("CINEX - Consultar disponibilidad de asientos");
+        setTitle("CINEX - Consultar mapa de asientos");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1366, 768, 1000, 650);
 
@@ -116,7 +116,7 @@ public class ConsultarDisponibilidadAsientosCINEXGUI extends JFrame {
         panel.setLayout(null);
         panel.setBorder(new LineBorder(AZUL_BORDE, 1, true));
 
-        JLabel titulo = new JLabel("<html>Consultar disponibilidad<br>de asientos</html>");
+        JLabel titulo = new JLabel("<html>Consultar mapa<br>de asientos</html>");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 24));
         titulo.setBounds(25, 22, 310, 58);

@@ -9,6 +9,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -42,6 +44,9 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.RenderingHints;
 import java.awt.Rectangle;
 import java.lang.reflect.Constructor;
@@ -77,9 +82,6 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
     private JLabel lblTotal;
     private JLabel lblMensaje;
     private BotonCINEX btnGuardar;
-    private BotonCINEX btnActualizar;
-    private BotonCINEX btnCambiarEstado;
-    private BotonCINEX btnNuevo;
     private BotonCINEX btnEliminar;
     private String usuarioOriginalSeleccionado = "";
     private BotonCINEX btnRestablecerContrasena;
@@ -100,7 +102,7 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
     }
 
     private void configurarVentana() {
-        setTitle("CINEX - Gestión de usuarios");
+        setTitle("CINEX - Agregar usuarios");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setMinimumSize(new Dimension(1100, 680));
         setExtendedState(JFrame.MAXIMIZED_BOTH);
@@ -139,7 +141,7 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new javax.swing.BoxLayout(textos, javax.swing.BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Gestión de usuarios");
+        JLabel titulo = new JLabel("Agregar usuarios");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 34));
 
@@ -244,22 +246,9 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
         cuerpo.add(btnGuardar, gbc);
 
         gbc.gridy++;
-        JPanel fila1 = new JPanel(new GridLayoutCINEX(1, 2, 10, 0));
-        fila1.setOpaque(false);
-        btnActualizar = crearBotonAccion("ACTUALIZAR", GRIS_BOTON, BLANCO, false);
-        btnCambiarEstado = crearBotonAccion("ACTIVAR / INACTIVAR", GRIS_BOTON, BLANCO, false);
-        fila1.add(btnActualizar);
-        fila1.add(btnCambiarEstado);
-        cuerpo.add(fila1, gbc);
-
-        gbc.gridy++;
-        JPanel fila2 = new JPanel(new GridLayoutCINEX(1, 2, 10, 0));
-        fila2.setOpaque(false);
-        btnNuevo = crearBotonAccion("NUEVO / LIMPIAR", AZUL_CARD, BLANCO, false);
         btnEliminar = crearBotonAccion("ELIMINAR", ROJO_BOTON, BLANCO, false);
-        fila2.add(btnNuevo);
-        fila2.add(btnEliminar);
-        cuerpo.add(fila2, gbc);
+        btnEliminar.setPreferredSize(new Dimension(0, 38));
+        cuerpo.add(btnEliminar, gbc);
 
         gbc.gridy++;
         btnRestablecerContrasena = crearBotonAccion(
@@ -291,7 +280,7 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
         JPanel encabezado = new JPanel(new BorderLayout());
         encabezado.setOpaque(false);
 
-        JLabel titulo = new JLabel("Usuarios registrados");
+        JLabel titulo = new JLabel("Listar usuarios registrados");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Segoe UI", Font.BOLD, 25));
 
@@ -510,9 +499,6 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
 
     private void configurarEventos() {
         btnGuardar.addActionListener(e -> guardarUsuario());
-        btnActualizar.addActionListener(e -> actualizarUsuario());
-        btnCambiarEstado.addActionListener(e -> cambiarEstadoUsuario());
-        btnNuevo.addActionListener(e -> limpiarFormulario());
         btnEliminar.addActionListener(e -> eliminarUsuario());
         btnRestablecerContrasena.addActionListener(
                 e -> restablecerContrasenaGerente()
@@ -524,6 +510,21 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
                 cargarSeleccionTabla();
             }
         });
+
+        tablaUsuarios.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (tablaUsuarios.rowAtPoint(e.getPoint()) < 0) {
+                    limpiarFormulario();
+                }
+            }
+        });
+
+        getRootPane().registerKeyboardAction(
+                e -> limpiarFormulario(),
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
 
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -597,10 +598,8 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
                 usuarioOriginalSeleccionado
                         .equalsIgnoreCase(usuarioActual);
 
-        btnActualizar.setEnabled(true);
-        btnCambiarEstado.setEnabled(true);
         btnEliminar.setEnabled(!esCuentaActual);
-        btnGuardar.setEnabled(false);
+        btnGuardar.setEnabled(true);
         actualizarControlesContrasena();
 
         if (esCuentaActual) {
@@ -611,8 +610,8 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
             );
         } else {
             mostrarMensaje(
-                    "Usuario seleccionado. Puede actualizar sus datos "
-                            + "o restablecer la contraseña si es gerente.",
+                    "Usuario seleccionado. Use GUARDAR para actualizar, "
+                            + "o restablezca la contraseña si es gerente.",
                     false
             );
         }
@@ -624,6 +623,29 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
     }
 
     private void guardarUsuario() {
+        if (idUsuarioSeleccionado > 0) {
+            UsuarioCINEX usuario = obtenerDatosFormulario(true);
+            ResultadoUsuario resultado = control.actualizarUsuario(usuario);
+
+            switch (resultado) {
+                case ACTUALIZADO:
+                    cargarUsuarios(txtBuscar.getText());
+                    limpiarFormulario();
+                    mostrarMensaje("Usuario actualizado correctamente.", false);
+                    break;
+                case USUARIO_EXISTE:
+                    mostrarMensaje("Ya existe otro usuario con ese nombre de acceso.", true);
+                    break;
+                case DATOS_INCOMPLETOS:
+                    mostrarMensaje("Complete nombre, usuario, rol y estado.", true);
+                    break;
+                default:
+                    mostrarMensaje("Error al actualizar usuario.", true);
+                    break;
+            }
+            return;
+        }
+
         UsuarioCINEX usuario = obtenerDatosFormulario(false);
         ResultadoUsuario resultado = control.registrarUsuario(usuario);
 
@@ -874,8 +896,6 @@ public class GestionUsuariosAdminCINEXGUI extends JFrame {
         tablaUsuarios.clearSelection();
 
         btnGuardar.setEnabled(true);
-        btnActualizar.setEnabled(false);
-        btnCambiarEstado.setEnabled(false);
         btnEliminar.setEnabled(false);
         if (btnRestablecerContrasena != null) {
             btnRestablecerContrasena.setEnabled(false);

@@ -56,7 +56,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
     public VentasGerenteCINEXGUI(String usuario) {
         this.usuarioActual = usuario == null || usuario.trim().isEmpty() ? "gerente" : usuario.trim();
 
-        setTitle("CINEX - Historial de ventas");
+        setTitle("CINEX - Visualizar historial de ventas");
         setSize(1280, 720);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -73,112 +73,18 @@ public class VentasGerenteCINEXGUI extends JFrame {
 
         int anchoPantalla = pantalla.width;
 
-        JPanel sidebar = new SidebarPanel();
-        sidebar.setLayout(null);
-        sidebar.setBounds(0, 0, 215, 900);
-        root.add(sidebar);
-
-        JLabel lblLogo = new JLabel();
-        lblLogo.setBounds(25, 15, 160, 75);
-        lblLogo.setIcon(loadScaledIcon("imagenes/logocinex.png", 150, 60));
-        sidebar.add(lblLogo);
-
-        SidebarButton btnReportesVentas = new SidebarButton("📄", "Reportes de ventas", false);
-        btnReportesVentas.setBounds(18, 110, 178, 58);
-        sidebar.add(btnReportesVentas);
-
-        SidebarButton btnHistorialVentas = new SidebarButton("🎟", "Historial de ventas", true);
-        btnHistorialVentas.setBounds(18, 178, 178, 58);
-        sidebar.add(btnHistorialVentas);
-
-        SidebarButton btnListaClientes = new SidebarButton("👥", "Lista de clientes", false);
-        btnListaClientes.setBounds(18, 246, 178, 58);
-        sidebar.add(btnListaClientes);
-
-        SidebarButton btnNotificaciones =
-                new SidebarButton(
-                        "🔔",
-                        "Notificaciones",
-                        false
-                );
-        btnNotificaciones.setBounds(
-                18,
-                314,
-                178,
-                58
-        );
-        sidebar.add(btnNotificaciones);
-
-        SidebarButton btnMenuPrincipal = new SidebarButton("≡", "Menú principal", false);
-        btnMenuPrincipal.setBounds(18, 672, 178, 52);
-        sidebar.add(btnMenuPrincipal);
-
-        JSeparator sep = new JSeparator();
-        sep.setBounds(20, 735, 175, 1);
-        sep.setForeground(new Color(35, 65, 105));
-        sidebar.add(sep);
-
-        SidebarButton btnCerrar = new SidebarButton("\u21A9", "Cerrar sesión", false);
-        btnCerrar.setBounds(18, 755, 178, 52);
-        sidebar.add(btnCerrar);
-
-        btnReportesVentas.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new ReportesGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnListaClientes.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                new ClientesGerenteCINEXGUI(usuarioActual).setVisible(true);
-                dispose();
-            }
-        });
-
-        btnNotificaciones.addMouseListener(
-                new MouseAdapter() {
-                    @Override
-                    public void mouseClicked(
-                            MouseEvent e
-                    ) {
-                        CINEXTransiciones.cambiar(
-                                VentasGerenteCINEXGUI.this,
-                                new NotificacionesGerenteCINEXGUI(
-                                        usuarioActual
-                                )
-                        );
-                    }
-                }
-        );
-
-        btnMenuPrincipal.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                abrirMenuPrincipal();
-            }
-        });
-
-        btnCerrar.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int opcion = JOptionPane.showConfirmDialog(
-                        VentasGerenteCINEXGUI.this,
-                        "¿Deseas cerrar sesión?",
-                        "Confirmar cierre de sesión",
-                        JOptionPane.YES_NO_OPTION
-                );
-
-                if (opcion == JOptionPane.YES_OPTION) {
-                    new LoginCINEXGUI().setVisible(true);
-                    dispose();
-                }
-            }
-        });
-
         int topX = anchoPantalla - 575;
+
+        JButton btnMenuGerente = new JButton("MENÚ GERENTE");
+        btnMenuGerente.setBounds(40, 820, 180, 44);
+        btnMenuGerente.setBackground(new Color(0, 80, 160));
+        btnMenuGerente.setForeground(BLANCO);
+        btnMenuGerente.setFont(new Font("Arial", Font.BOLD, 13));
+        btnMenuGerente.setFocusPainted(false);
+        btnMenuGerente.setBorderPainted(false);
+        btnMenuGerente.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnMenuGerente.addActionListener(e -> abrirMenuPrincipal());
+        root.add(btnMenuGerente);
 
         JLabel lblUsuario = crearTextoSuperior("Usuario: " + usuarioActual);
         lblUsuario.setBounds(topX, 18, 210, 25);
@@ -200,54 +106,54 @@ public class VentasGerenteCINEXGUI extends JFrame {
         Timer timer = new Timer(1000, e -> actualizarFechaHora());
         timer.start();
 
-        JLabel lblTitulo = new JLabel("Historial de ventas");
+        JLabel lblTitulo = new JLabel("Visualizar historial de ventas");
         lblTitulo.setForeground(BLANCO);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 34));
-        lblTitulo.setBounds(255, 78, 360, 40);
+        lblTitulo.setBounds(40, 55, 650, 44);
         root.add(lblTitulo);
 
         JLabel lblSubtitulo = new JLabel("Consulte las ventas realizadas en periodos anteriores");
         lblSubtitulo.setForeground(GRIS);
         lblSubtitulo.setFont(new Font("Arial", Font.PLAIN, 17));
-        lblSubtitulo.setBounds(257, 118, 520, 25);
+        lblSubtitulo.setBounds(42, 102, 720, 25);
         root.add(lblSubtitulo);
 
         JLabel lblFechaInicio = crearLabelFiltro("Fecha inicio:");
-        lblFechaInicio.setBounds(255, 155, 120, 22);
+        lblFechaInicio.setBounds(40, 140, 120, 22);
         root.add(lblFechaInicio);
 
         txtInicio = crearCampoFiltro(LocalDate.now().minusMonths(1).format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        txtInicio.setBounds(255, 180, 125, 38);
+        txtInicio.setBounds(40, 165, 125, 38);
         root.add(txtInicio);
 
         btnCalendarioInicio = crearBotonCalendario();
-        btnCalendarioInicio.setBounds(383, 180, 38, 38);
+        btnCalendarioInicio.setBounds(168, 165, 38, 38);
         btnCalendarioInicio.addActionListener(e -> mostrarCalendario(txtInicio));
         root.add(btnCalendarioInicio);
 
         JLabel lblFechaFin = crearLabelFiltro("Fecha fin:");
-        lblFechaFin.setBounds(435, 155, 120, 22);
+        lblFechaFin.setBounds(220, 140, 120, 22);
         root.add(lblFechaFin);
 
         txtFin = crearCampoFiltro(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        txtFin.setBounds(435, 180, 125, 38);
+        txtFin.setBounds(220, 165, 125, 38);
         root.add(txtFin);
 
         btnCalendarioFin = crearBotonCalendario();
-        btnCalendarioFin.setBounds(563, 180, 38, 38);
+        btnCalendarioFin.setBounds(348, 165, 38, 38);
         btnCalendarioFin.addActionListener(e -> mostrarCalendario(txtFin));
         root.add(btnCalendarioFin);
 
         JLabel lblSala = crearLabelFiltro("Sala:");
-        lblSala.setBounds(615, 155, 120, 22);
+        lblSala.setBounds(400, 140, 120, 22);
         root.add(lblSala);
 
         cbSala = crearCombo(new String[]{"Todas"});
-        cbSala.setBounds(615, 180, 140, 38);
+        cbSala.setBounds(400, 165, 140, 38);
         root.add(cbSala);
 
         JLabel lblMetodo = crearLabelFiltro("Método de pago:");
-        lblMetodo.setBounds(780, 155, 140, 22);
+        lblMetodo.setBounds(565, 140, 140, 22);
         root.add(lblMetodo);
 
         cbMetodo = crearCombo(new String[]{
@@ -258,11 +164,11 @@ public class VentasGerenteCINEXGUI extends JFrame {
                 "Yape",
                 "Plin"
         });
-        cbMetodo.setBounds(780, 180, 220, 38);
+        cbMetodo.setBounds(565, 165, 220, 38);
         root.add(cbMetodo);
 
         btnBuscar = new JButton("BUSCAR");
-        btnBuscar.setBounds(1030, 180, 130, 38);
+        btnBuscar.setBounds(815, 165, 130, 38);
         btnBuscar.setBackground(AMARILLO);
         btnBuscar.setForeground(AZUL_FONDO_1);
         btnBuscar.setFont(new Font("Arial", Font.BOLD, 14));
@@ -275,12 +181,12 @@ public class VentasGerenteCINEXGUI extends JFrame {
         lblEstadoConsulta.setForeground(GRIS);
         lblEstadoConsulta.setFont(new Font("Arial", Font.BOLD, 13));
         lblEstadoConsulta.setVerticalAlignment(SwingConstants.CENTER);
-        lblEstadoConsulta.setBounds(255, 222, 650, 18);
+        lblEstadoConsulta.setBounds(40, 207, 800, 18);
         root.add(lblEstadoConsulta);
 
         JPanel tablaPanel = new PanelRedondeado();
         tablaPanel.setLayout(new BorderLayout());
-        tablaPanel.setBounds(255, 250, 980, 375);
+        tablaPanel.setBounds(40, 235, 1195, 375);
         tablaPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         root.add(tablaPanel);
 
@@ -346,7 +252,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
 
         JPanel bottomPanel = new PanelRedondeado();
         bottomPanel.setLayout(null);
-        bottomPanel.setBounds(255, 630, 980, 70);
+        bottomPanel.setBounds(40, 615, 1195, 70);
         root.add(bottomPanel);
 
         JLabel lblTotal = new JLabel("Ventas netas:");
@@ -389,7 +295,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
                 root,
                 1280,
                 900,
-                215
+                0
         );
     }
 

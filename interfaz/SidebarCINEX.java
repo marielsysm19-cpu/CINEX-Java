@@ -30,11 +30,11 @@ public class SidebarCINEX extends JPanel {
 
     private void construir() {
         String[] pasos = {
-                "1. Cliente",
-                "2. Película",
-                "3. Función",
-                "4. Asientos",
-                "5. Pago",
+                "1. Búsqueda o registro de cliente",
+                "2. Elegir película",
+                "3. Seleccionar función",
+                "4. Seleccionar asientos",
+                "5. Tipo de entrada y pago",
                 "6. Confirmación"
         };
 
@@ -97,7 +97,7 @@ public class SidebarCINEX extends JPanel {
                 g2.setColor(GRIS_TEXTO);
             }
 
-            int fontSize = activo ? 15 : 14;
+            int fontSize = texto.length() > 23 ? 11 : (activo ? 14 : 13);
             g2.setFont(new Font("Arial", Font.BOLD, fontSize));
 
             FontMetrics fm = g2.getFontMetrics();

@@ -143,7 +143,7 @@ public class ConfirmacionCINEXGUI extends JFrame {
         recuperarInformacionVenta();
         validarVentaPagada();
 
-        setTitle("CINEX - Emisión de comprobante");
+        setTitle("CINEX - Confirmación");
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1366, 768, 1000, 650);
 
@@ -335,7 +335,7 @@ public class ConfirmacionCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Emisión de comprobante");
+        JLabel titulo = new JLabel("Confirmación");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 31));
 
@@ -361,7 +361,7 @@ public class ConfirmacionCINEXGUI extends JFrame {
         resumen.setAlignmentX(Component.LEFT_ALIGNMENT);
         resumen.setBorder(new LineBorder(new Color(80, 105, 145), 1, true));
 
-        JLabel lblResumen = new JLabel("Información de la venta pagada");
+        JLabel lblResumen = new JLabel("Resumen compra");
         lblResumen.setForeground(BLANCO);
         lblResumen.setFont(new Font("Arial", Font.BOLD, 22));
         lblResumen.setBounds(35, 25, 380, 30);
@@ -418,16 +418,9 @@ public class ConfirmacionCINEXGUI extends JFrame {
         footer.setOpaque(false);
         footer.setBorder(new EmptyBorder(10, 25, 25, 25));
 
-        btnNuevaVenta = crearBotonAzul("NUEVA VENTA");
         btnMenuPrincipal = crearBotonAzul("MENÚ PRINCIPAL");
-        btnGenerarComprobante = crearBotonPrincipal("GENERAR COMPROBANTE");
+        btnGenerarComprobante = crearBotonPrincipal("EMITIR COMPROBANTE");
         btnImprimir = crearBotonAzul("IMPRIMIR");
-
-        btnNuevaVenta.addActionListener(e ->
-                intentarSalirDespuesDelComprobante(
-                        new RegistroClienteCINEXGUI(usuarioActual)
-                )
-        );
 
         btnMenuPrincipal.addActionListener(e ->
                 intentarSalirDespuesDelComprobante(
@@ -443,7 +436,6 @@ public class ConfirmacionCINEXGUI extends JFrame {
 
         JPanel botonesIzquierda = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 0));
         botonesIzquierda.setOpaque(false);
-        botonesIzquierda.add(btnNuevaVenta);
         botonesIzquierda.add(btnMenuPrincipal);
 
         JPanel botonesDerecha = new JPanel(new FlowLayout(FlowLayout.RIGHT, 22, 0));
@@ -469,8 +461,7 @@ public class ConfirmacionCINEXGUI extends JFrame {
     private void mostrarErrorComprobanteObligatorio() {
         JOptionPane.showMessageDialog(
                 this,
-                "Debe generar el comprobante antes de iniciar una nueva venta "
-                        + "o volver al menú principal.",
+                "Debe generar el comprobante antes de volver al menú principal.",
                 "Comprobante obligatorio",
                 JOptionPane.WARNING_MESSAGE
         );
@@ -482,20 +473,8 @@ public class ConfirmacionCINEXGUI extends JFrame {
             return;
         }
 
-        int confirmar = JOptionPane.showConfirmDialog(
-                this,
-                "¿Desea generar el comprobante de pago?",
-                "Generar comprobante",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.QUESTION_MESSAGE
-        );
-
-        if (confirmar != JOptionPane.YES_OPTION) {
-            return;
-        }
-
         btnGenerarComprobante.setEnabled(false);
-        btnGenerarComprobante.setText("GENERADO");
+        btnGenerarComprobante.setText("EMITIDO");
 
         final String asientosTexto = String.join(", ", asientosSeleccionados);
 

@@ -1,6 +1,8 @@
 package interfaz;
 
 import control.ControlGestionarFuncionesCINEX;
+import control.ControlGestionarFuncionesCINEX.DatosFuncion;
+import control.ControlGestionarFuncionesCINEX.ResultadoModificacion;
 import control.ControlNotificacionesCINEX;
 import control.ControlProgramaFuncionCINEX;
 import control.ControlProgramaFuncionCINEX.ResultadoProgramacion;
@@ -102,7 +104,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
 
     private JButton btnProgramar;
     private JButton btnCancelarFuncion;
-    private JButton btnRefrescar;
+    private JButton btnModificarFuncion;
 
     private boolean cargandoCatalogos;
 
@@ -134,7 +136,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
     }
 
     private void configurarVentana() {
-        setTitle("CINEX - Gestionar programación de funciones");
+        setTitle("CINEX - Programar funciones");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1380, 820);
         setMinimumSize(new Dimension(1180, 720));
@@ -171,7 +173,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Gestionar programación de funciones");
+        JLabel titulo = new JLabel("Programar funciones");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 31));
 
@@ -300,7 +302,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         cabecera.setOpaque(false);
         cabecera.setLayout(new BoxLayout(cabecera, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Programar nueva función");
+        JLabel titulo = new JLabel("Programar funciones");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 22));
 
@@ -436,12 +438,12 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Funciones programadas");
+        JLabel titulo = new JLabel("Listar funciones programadas");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 20));
 
         JLabel descripcion = new JLabel(
-                "Consulte las funciones existentes y cancele una programación cuando sea necesario."
+                "Seleccione una función activa para modificarla o cancelarla cuando sea necesario."
         );
         descripcion.setForeground(GRIS);
         descripcion.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -451,12 +453,12 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         textos.add(descripcion);
 
         txtBuscar = crearCampoTexto();
-        txtBuscar.setPreferredSize(new Dimension(270, 39));
-        txtBuscar.setToolTipText("Buscar por película, sala, fecha o estado");
+        txtBuscar.setPreferredSize(new Dimension(315, 39));
+        txtBuscar.setToolTipText("Buscar por película, sala, fecha, hora o estado");
 
         JPanel buscador = new JPanel(new BorderLayout(8, 0));
         buscador.setOpaque(false);
-        JLabel lblBuscar = new JLabel("Buscar:");
+        JLabel lblBuscar = new JLabel("Buscar funciones programadas:");
         lblBuscar.setForeground(GRIS);
         lblBuscar.setFont(new Font("Arial", Font.BOLD, 13));
         buscador.add(lblBuscar, BorderLayout.WEST);
@@ -509,7 +511,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         lblMensaje.setForeground(GRIS);
         lblMensaje.setFont(new Font("Arial", Font.BOLD, 12));
 
-        JLabel ayuda = new JLabel("Seleccione una fila para habilitar la cancelación.");
+        JLabel ayuda = new JLabel("Seleccione una fila para habilitar la modificación o cancelación.");
         ayuda.setForeground(new Color(145, 160, 185));
         ayuda.setFont(new Font("Arial", Font.PLAIN, 12));
 
@@ -535,24 +537,30 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         nota.setForeground(new Color(145, 160, 185));
         nota.setFont(new Font("Arial", Font.PLAIN, 12));
 
+        btnModificarFuncion = crearBoton(
+                "MODIFICAR FUNCIÓN",
+                AMARILLO,
+                Color.BLACK,
+                46
+        );
         btnCancelarFuncion = crearBoton(
                 "CANCELAR FUNCIÓN",
                 new Color(150, 48, 55),
                 BLANCO,
                 46
         );
-        btnRefrescar = crearBoton("REFRESCAR LISTA", AZUL_PANEL_2, BLANCO, 46);
         JButton btnMenu = crearBoton("MENÚ PRINCIPAL", AZUL_BOTON, BLANCO, 46);
 
+        btnModificarFuncion.setPreferredSize(new Dimension(205, 46));
         btnCancelarFuncion.setPreferredSize(new Dimension(195, 46));
-        btnRefrescar.setPreferredSize(new Dimension(180, 46));
         btnMenu.setPreferredSize(new Dimension(185, 46));
+        btnModificarFuncion.setEnabled(false);
         btnCancelarFuncion.setEnabled(false);
 
         JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         acciones.setOpaque(false);
+        acciones.add(btnModificarFuncion);
         acciones.add(btnCancelarFuncion);
-        acciones.add(btnRefrescar);
         acciones.add(btnMenu);
 
         btnMenu.addActionListener(e -> volverMenu());
@@ -569,14 +577,17 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         spHora.addChangeListener(e -> actualizarResumen());
 
         btnProgramar.addActionListener(e -> solicitarProgramacion());
-        btnRefrescar.addActionListener(e -> cargarTodo());
+        btnModificarFuncion.addActionListener(e -> modificarFuncionSeleccionada());
         btnCancelarFuncion.addActionListener(e -> cancelarFuncionSeleccionada());
 
         tabla.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                btnCancelarFuncion.setEnabled(
-                        funcionSeleccionadaEstaActiva()
-                );
+                boolean activa = funcionSeleccionadaEstaActiva();
+                btnModificarFuncion.setEnabled(activa);
+                btnCancelarFuncion.setEnabled(activa);
+                if (activa) {
+                    cargarFuncionSeleccionadaEnFormulario();
+                }
             }
         });
 
@@ -584,10 +595,11 @@ public class FuncionesAdminCINEXGUI extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && tabla.getSelectedRow() >= 0) {
-                    cancelarFuncionSeleccionada();
+                    cargarFuncionSeleccionadaEnFormulario();
                 }
             }
         });
+
 
         txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -714,7 +726,6 @@ public class FuncionesAdminCINEXGUI extends JFrame {
     private void cargarFunciones() {
         lblMensaje.setText("Consultando funciones...");
         lblMensaje.setForeground(GRIS);
-        btnRefrescar.setEnabled(false);
         btnCancelarFuncion.setEnabled(false);
 
         SwingWorker<ArrayList<Object[]>, Void> worker = new SwingWorker<ArrayList<Object[]>, Void>() {
@@ -799,7 +810,8 @@ public class FuncionesAdminCINEXGUI extends JFrame {
                     lblMensaje.setText("No se pudieron cargar las funciones.");
                     lblMensaje.setForeground(ROJO);
                 } finally {
-                    btnRefrescar.setEnabled(true);
+                    btnModificarFuncion.setEnabled(false);
+                    btnCancelarFuncion.setEnabled(false);
                 }
             }
         };
@@ -977,9 +989,9 @@ public class FuncionesAdminCINEXGUI extends JFrame {
             );
         }
 
-        btnCancelarFuncion.setEnabled(
-                funcionSeleccionadaEstaActiva()
-        );
+        boolean activa = funcionSeleccionadaEstaActiva();
+        btnModificarFuncion.setEnabled(activa);
+        btnCancelarFuncion.setEnabled(activa);
     }
 
     private void actualizarContadoresEstados() {
@@ -1234,6 +1246,197 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         );
     }
 
+    private void cargarFuncionSeleccionadaEnFormulario() {
+        int filaVista = tabla.getSelectedRow();
+        if (filaVista < 0) {
+            return;
+        }
+
+        int filaModelo = tabla.convertRowIndexToModel(filaVista);
+        int idFuncion = convertirEntero(modelo.getValueAt(filaModelo, 0));
+        DatosFuncion datos = controlFunciones.obtenerFuncion(idFuncion);
+
+        if (datos == null) {
+            return;
+        }
+
+        cargandoCatalogos = true;
+        seleccionarPeliculaPorId(datos.getIdPelicula());
+        seleccionarSalaPorId(datos.getIdSala());
+        spFecha.setValue(Date.from(
+                datos.getFecha().atStartOfDay(ZoneId.systemDefault()).toInstant()
+        ));
+
+        Calendar calendario = Calendar.getInstance();
+        calendario.set(Calendar.HOUR_OF_DAY, datos.getHora().getHour());
+        calendario.set(Calendar.MINUTE, datos.getHora().getMinute());
+        calendario.set(Calendar.SECOND, 0);
+        spHora.setValue(calendario.getTime());
+        cargandoCatalogos = false;
+
+        mostrarValidacion(
+                "Función seleccionada",
+                "Modifique los datos necesarios y presione MODIFICAR FUNCIÓN.",
+                AMARILLO
+        );
+        actualizarResumen();
+    }
+
+    private void seleccionarPeliculaPorId(int idPelicula) {
+        for (int i = 0; i < cbPelicula.getItemCount(); i++) {
+            PeliculaCINEX item = cbPelicula.getItemAt(i);
+            if (item != null && item.getIdPelicula() == idPelicula) {
+                cbPelicula.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void seleccionarSalaPorId(int idSala) {
+        for (int i = 0; i < cbSala.getItemCount(); i++) {
+            SalaItem item = cbSala.getItemAt(i);
+            if (item != null && item.getIdSala() == idSala) {
+                cbSala.setSelectedIndex(i);
+                return;
+            }
+        }
+    }
+
+    private void modificarFuncionSeleccionada() {
+        int filaVista = tabla.getSelectedRow();
+        if (filaVista < 0) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Seleccione una función activa de la tabla.",
+                    "Función requerida",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        int filaModelo = tabla.convertRowIndexToModel(filaVista);
+        int idFuncion = convertirEntero(modelo.getValueAt(filaModelo, 0));
+        String peliculaAnterior = valorSeguro(modelo.getValueAt(filaModelo, 1));
+        String salaAnterior = valorSeguro(modelo.getValueAt(filaModelo, 2));
+        String fechaAnterior = valorSeguro(modelo.getValueAt(filaModelo, 3));
+        String horaAnterior = valorSeguro(modelo.getValueAt(filaModelo, 4));
+
+        PeliculaCINEX pelicula = (PeliculaCINEX) cbPelicula.getSelectedItem();
+        SalaItem sala = (SalaItem) cbSala.getSelectedItem();
+        LocalDate fecha = obtenerFechaSeleccionada();
+        LocalTime hora = obtenerHoraSeleccionada();
+
+        if (pelicula == null || sala == null || fecha == null || hora == null) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Complete todos los datos de la función.",
+                    "Datos incompletos",
+                    JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        int entradasCompradas = controlFunciones.contarEntradasCompradas(idFuncion);
+        String avisoEntradas = entradasCompradas > 0
+                ? "\n\nEsta función tiene " + entradasCompradas + " entrada(s) comprada(s)."
+                        + "\nAl modificarla, se enviará una notificación al gerente"
+                        + "\npara revisar el reembolso de las entradas afectadas."
+                : "";
+
+        int confirmar = JOptionPane.showConfirmDialog(
+                this,
+                "¿Desea modificar la función seleccionada?\n\n"
+                        + "Película: " + pelicula.getTitulo() + "\n"
+                        + "Sala: " + sala.getDescripcion() + "\n"
+                        + "Fecha: " + fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + "\n"
+                        + "Hora: " + hora.format(DateTimeFormatter.ofPattern("hh:mm a"))
+                        + avisoEntradas,
+                "Confirmar modificación",
+                JOptionPane.YES_NO_OPTION,
+                entradasCompradas > 0
+                        ? JOptionPane.WARNING_MESSAGE
+                        : JOptionPane.QUESTION_MESSAGE
+        );
+
+        if (confirmar != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        bloquearMientrasProcesa(true);
+        lblMensaje.setText("Modificando función...");
+        lblMensaje.setForeground(AMARILLO);
+
+        SwingWorker<ResultadoModificacion, Void> worker =
+                new SwingWorker<ResultadoModificacion, Void>() {
+            @Override
+            protected ResultadoModificacion doInBackground() {
+                return controlFunciones.modificarFuncion(
+                        idFuncion,
+                        pelicula.getIdPelicula(),
+                        sala.getIdSala(),
+                        fecha,
+                        hora
+                );
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ResultadoModificacion resultado = get();
+                    if (!resultado.isExito()) {
+                        JOptionPane.showMessageDialog(
+                                FuncionesAdminCINEXGUI.this,
+                                resultado.getMensaje(),
+                                "No se pudo modificar",
+                                JOptionPane.WARNING_MESSAGE
+                        );
+                        return;
+                    }
+
+                    if (resultado.getEntradasCompradas() > 0) {
+                        controlNotificaciones.registrarCambioFuncion(
+                                idFuncion,
+                                "La función fue modificada y posee entradas compradas. Se requiere revisar el reembolso.",
+                                "Película: " + peliculaAnterior
+                                        + "\nSala: " + salaAnterior
+                                        + "\nFecha: " + fechaAnterior
+                                        + "\nHora: " + horaAnterior,
+                                "Película: " + pelicula.getTitulo()
+                                        + "\nSala: " + sala.getDescripcion()
+                                        + "\nFecha: " + fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                                        + "\nHora: " + hora.format(DateTimeFormatter.ofPattern("hh:mm a"))
+                                        + "\nEntradas afectadas: " + resultado.getEntradasCompradas(),
+                                usuarioActual
+                        );
+                    }
+
+                    JOptionPane.showMessageDialog(
+                            FuncionesAdminCINEXGUI.this,
+                            resultado.getMensaje(),
+                            "Modificación exitosa",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                    tabla.clearSelection();
+                    limpiarFormulario();
+                    cargarFunciones();
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            FuncionesAdminCINEXGUI.this,
+                            "Ocurrió un error al modificar la función.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                } finally {
+                    bloquearMientrasProcesa(false);
+                }
+            }
+        };
+
+        worker.execute();
+    }
+
     private void cancelarFuncionSeleccionada() {
         int filaVista = tabla.getSelectedRow();
 
@@ -1441,16 +1644,22 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         spFecha.setEnabled(puedeUsarFormulario);
         spHora.setEnabled(puedeUsarFormulario);
         btnProgramar.setEnabled(puedeUsarFormulario);
-        btnRefrescar.setEnabled(!bloquear);
         tabla.setEnabled(!bloquear);
-        txtBuscar.setEnabled(!bloquear);
-        btnCancelarFuncion.setEnabled(
-                !bloquear
-                        && funcionSeleccionadaEstaActiva()
-        );
+        if (txtBuscar != null) {
+            txtBuscar.setEnabled(!bloquear);
+        }
+        boolean activa = !bloquear && funcionSeleccionadaEstaActiva();
+        btnModificarFuncion.setEnabled(activa);
+        btnCancelarFuncion.setEnabled(activa);
     }
 
+
+
     private void filtrarTabla() {
+        if (txtBuscar == null || sorter == null) {
+            return;
+        }
+
         String texto = txtBuscar.getText().trim();
         if (texto.isEmpty()) {
             sorter.setRowFilter(null);
@@ -1460,7 +1669,9 @@ public class FuncionesAdminCINEXGUI extends JFrame {
                     1, 2, 3, 4, 5
             ));
         }
+
         tabla.clearSelection();
+        btnModificarFuncion.setEnabled(false);
         btnCancelarFuncion.setEnabled(false);
     }
 

@@ -6,12 +6,9 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
@@ -21,7 +18,6 @@ import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.regex.Pattern;
 
 public class PreciosAdminCINEXGUI extends JFrame {
 
@@ -46,9 +42,7 @@ public class PreciosAdminCINEXGUI extends JFrame {
 
     private JTable tabla;
     private DefaultTableModel modelo;
-    private TableRowSorter<DefaultTableModel> sorter;
 
-    private JTextField txtBuscar;
     private JTextField txtTipoEntrada;
     private JTextField txtMonto;
 
@@ -60,7 +54,6 @@ public class PreciosAdminCINEXGUI extends JFrame {
     private JLabel lblFecha;
 
     private JButton btnGuardar;
-    private JButton btnRefrescar;
     private JButton btnLimpiar;
 
     private int idSeleccionado = -1;
@@ -84,7 +77,7 @@ public class PreciosAdminCINEXGUI extends JFrame {
     }
 
     private void configurarVentana() {
-        setTitle("CINEX - Configuración de precios");
+        setTitle("CINEX - Configurar precios");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1280, 760);
         setMinimumSize(new Dimension(1100, 680));
@@ -121,7 +114,7 @@ public class PreciosAdminCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Configuración de precios");
+        JLabel titulo = new JLabel("Configurar precios");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 32));
 
@@ -232,7 +225,7 @@ public class PreciosAdminCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Tarifas registradas");
+        JLabel titulo = new JLabel("Lista de tarifas registradas");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 21));
 
@@ -244,22 +237,7 @@ public class PreciosAdminCINEXGUI extends JFrame {
         textos.add(Box.createVerticalStrut(4));
         textos.add(subtitulo);
 
-        txtBuscar = crearCampoTexto();
-        txtBuscar.setPreferredSize(new Dimension(260, 40));
-        txtBuscar.setToolTipText("Buscar por tipo de entrada");
-
-        JPanel buscador = new JPanel(new BorderLayout(8, 0));
-        buscador.setOpaque(false);
-
-        JLabel lupa = new JLabel("Buscar:");
-        lupa.setForeground(GRIS);
-        lupa.setFont(new Font("Arial", Font.BOLD, 13));
-
-        buscador.add(lupa, BorderLayout.WEST);
-        buscador.add(txtBuscar, BorderLayout.CENTER);
-
         encabezado.add(textos, BorderLayout.WEST);
-        encabezado.add(buscador, BorderLayout.EAST);
 
         modelo = new DefaultTableModel(
                 new String[]{"ID", "Tipo de entrada", "Monto"}, 0
@@ -280,9 +258,6 @@ public class PreciosAdminCINEXGUI extends JFrame {
 
         tabla = new JTable(modelo);
         estilizarTabla();
-
-        sorter = new TableRowSorter<>(modelo);
-        tabla.setRowSorter(sorter);
 
         JScrollPane scroll = new JScrollPane(tabla);
         scroll.setBorder(new LineBorder(AZUL_BORDE, 1, true));
@@ -393,18 +368,13 @@ public class PreciosAdminCINEXGUI extends JFrame {
         nota.setFont(new Font("Arial", Font.PLAIN, 12));
 
         JButton btnMenu = crearBoton("MENÚ PRINCIPAL", AZUL_BOTON, BLANCO, 48);
-        btnRefrescar = crearBoton("REFRESCAR LISTA", AZUL_PANEL_2, BLANCO, 48);
-
         btnMenu.setPreferredSize(new Dimension(190, 48));
-        btnRefrescar.setPreferredSize(new Dimension(190, 48));
 
         JPanel acciones = new JPanel(new FlowLayout(FlowLayout.RIGHT, 14, 0));
         acciones.setOpaque(false);
-        acciones.add(btnRefrescar);
         acciones.add(btnMenu);
 
         btnMenu.addActionListener(e -> volverMenu());
-        btnRefrescar.addActionListener(e -> cargarDatos());
 
         footer.add(nota, BorderLayout.WEST);
         footer.add(acciones, BorderLayout.EAST);
@@ -428,22 +398,6 @@ public class PreciosAdminCINEXGUI extends JFrame {
             }
         });
 
-        txtBuscar.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                filtrarTabla();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                filtrarTabla();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                filtrarTabla();
-            }
-        });
 
         txtMonto.addKeyListener(new KeyAdapter() {
             @Override
@@ -467,7 +421,6 @@ public class PreciosAdminCINEXGUI extends JFrame {
     private void cargarDatos() {
         limpiarSeleccion();
         mostrarEstado("Consultando precios...", GRIS);
-        btnRefrescar.setEnabled(false);
 
         SwingWorker<ArrayList<Object[]>, Void> worker = new SwingWorker<ArrayList<Object[]>, Void>() {
             @Override
@@ -521,7 +474,7 @@ public class PreciosAdminCINEXGUI extends JFrame {
                             JOptionPane.ERROR_MESSAGE
                     );
                 } finally {
-                    btnRefrescar.setEnabled(true);
+                    tabla.setEnabled(true);
                 }
             }
         };
@@ -680,27 +633,11 @@ public class PreciosAdminCINEXGUI extends JFrame {
 
     private void bloquearMientrasGuarda(boolean bloquear) {
         tabla.setEnabled(!bloquear);
-        txtBuscar.setEnabled(!bloquear);
         txtMonto.setEnabled(!bloquear && idSeleccionado > 0);
         btnGuardar.setEnabled(!bloquear && idSeleccionado > 0);
         btnLimpiar.setEnabled(!bloquear && idSeleccionado > 0);
-        btnRefrescar.setEnabled(!bloquear);
     }
 
-    private void filtrarTabla() {
-        String texto = txtBuscar.getText().trim();
-
-        if (texto.isEmpty()) {
-            sorter.setRowFilter(null);
-        } else {
-            sorter.setRowFilter(RowFilter.regexFilter(
-                    "(?i)" + Pattern.quote(texto),
-                    1
-            ));
-        }
-
-        limpiarSeleccion();
-    }
 
     private void estilizarTabla() {
         tabla.setRowHeight(44);

@@ -132,15 +132,15 @@ public class MenuGerenteCINEXGUI extends JFrame {
         grid.setMaximumSize(new Dimension(1080, 470));
 
         MenuCard dashboard =
-                new MenuCard("📊", "Dashboard", true);
+                new MenuCard("📊", "Visualizar dashboard", true);
         MenuCard reportes =
-                new MenuCard("📄", "Reportes de ventas", false);
+                new MenuCard("📄", "Visualizar reporte de ventas", false);
         MenuCard historial =
-                new MenuCard("🎟", "Historial de ventas", false);
+                new MenuCard("🎟", "Visualizar historial de ventas", false);
         MenuCard clientes =
-                new MenuCard("👥", "Lista de clientes", false);
+                new MenuCard("👥", "Listar clientes", false);
         MenuCard notificaciones =
-                new MenuCard("🔔", "Notificaciones", false);
+                new MenuCard("🔔", "Visualizar notificaciones de reembolso", false);
         MenuCard cerrar =
                 new MenuCard("↩", "Cerrar Sesión", false);
 
@@ -194,6 +194,7 @@ public class MenuGerenteCINEXGUI extends JFrame {
             }
         });
 
+
         notificaciones.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -203,6 +204,7 @@ public class MenuGerenteCINEXGUI extends JFrame {
                 );
             }
         });
+
 
         cerrar.addMouseListener(new MouseAdapter() {
             @Override
@@ -394,19 +396,48 @@ public class MenuGerenteCINEXGUI extends JFrame {
             g2.setFont(new Font(
                     "Arial",
                     Font.BOLD,
-                    22
+                    texto.length() > 28 ? 18 : 21
             ));
 
-            FontMetrics fmTexto = g2.getFontMetrics();
-            int anchoTexto = fmTexto.stringWidth(texto);
-
-            g2.drawString(
-                    texto,
-                    (getWidth() - 10 - anchoTexto) / 2,
-                    158
-            );
+            dibujarTextoCentrado(g2, texto, 0, 145, getWidth() - 10, 27);
 
             g2.dispose();
         }
+        private void dibujarTextoCentrado(
+                Graphics2D g2,
+                String texto,
+                int x,
+                int y,
+                int ancho,
+                int altoLinea
+        ) {
+            FontMetrics fm = g2.getFontMetrics();
+            int limite = ancho - 26;
+
+            if (fm.stringWidth(texto) <= limite) {
+                int w = fm.stringWidth(texto);
+                g2.drawString(texto, x + (ancho - w) / 2, y + 12);
+                return;
+            }
+
+            String[] palabras = texto.split(" ");
+            String linea1 = "";
+            String linea2 = "";
+
+            for (String palabra : palabras) {
+                String prueba = linea1.isEmpty() ? palabra : linea1 + " " + palabra;
+                if (fm.stringWidth(prueba) <= limite && linea2.isEmpty()) {
+                    linea1 = prueba;
+                } else {
+                    linea2 = linea2.isEmpty() ? palabra : linea2 + " " + palabra;
+                }
+            }
+
+            int w1 = fm.stringWidth(linea1);
+            int w2 = fm.stringWidth(linea2);
+            g2.drawString(linea1, x + (ancho - w1) / 2, y);
+            g2.drawString(linea2, x + (ancho - w2) / 2, y + altoLinea);
+        }
+
     }
 }

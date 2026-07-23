@@ -49,7 +49,7 @@ public class ConsultarPeliculasCINEXGUI extends JFrame {
     public ConsultarPeliculasCINEXGUI(String usuario) {
         this.usuarioActual = usuario == null || usuario.trim().isEmpty() ? "taquillero" : usuario.trim();
 
-        setTitle("CINEX - Consultar películas");
+        setTitle("CINEX - Consultar película");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         CINEXResponsive.configurarVentana(this, 1420, 830, 1000, 650);
 
@@ -127,7 +127,7 @@ public class ConsultarPeliculasCINEXGUI extends JFrame {
         panel.setMaximumSize(new Dimension(2000, 115));
         panel.setBorder(new LineBorder(new Color(55, 84, 128), 1, true));
 
-        JLabel titulo = new JLabel("Consultar películas");
+        JLabel titulo = new JLabel("Consultar película");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 26));
         titulo.setBounds(32, 18, 500, 34);

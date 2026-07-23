@@ -23,8 +23,7 @@ public class SimuladorPagoMovilCINEX extends JDialog {
     private JLabel lblMensaje;
     private JLabel lblEstado;
     private JProgressBar barra;
-    private JButton btnConfirmar;
-    private JButton btnRechazar;
+    private JButton btnPagar;
 
     public SimuladorPagoMovilCINEX(JFrame padre, double monto, String metodoPago, String nombreQR) {
         super(padre, "Pago móvil CINEX", true);
@@ -97,28 +96,17 @@ public class SimuladorPagoMovilCINEX extends JDialog {
         lblEstado.setBounds(0, 415, 500, 25);
         root.add(lblEstado);
 
-        btnConfirmar = new JButton("CONFIRMAR PAGO");
-        btnConfirmar.setBounds(75, 460, 165, 45);
-        btnConfirmar.setBackground(AMARILLO);
-        btnConfirmar.setForeground(new Color(3, 18, 45));
-        btnConfirmar.setFont(new Font("Arial", Font.BOLD, 12));
-        btnConfirmar.setFocusPainted(false);
-        btnConfirmar.setBorderPainted(false);
-        btnConfirmar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        root.add(btnConfirmar);
+        btnPagar = new JButton("PAGAR");
+        btnPagar.setBounds(135, 460, 230, 45);
+        btnPagar.setBackground(AMARILLO);
+        btnPagar.setForeground(new Color(3, 18, 45));
+        btnPagar.setFont(new Font("Arial", Font.BOLD, 14));
+        btnPagar.setFocusPainted(false);
+        btnPagar.setBorderPainted(false);
+        btnPagar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        root.add(btnPagar);
 
-        btnRechazar = new JButton("RECHAZAR PAGO");
-        btnRechazar.setBounds(260, 460, 165, 45);
-        btnRechazar.setBackground(ROJO);
-        btnRechazar.setForeground(BLANCO);
-        btnRechazar.setFont(new Font("Arial", Font.BOLD, 12));
-        btnRechazar.setFocusPainted(false);
-        btnRechazar.setBorderPainted(false);
-        btnRechazar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        root.add(btnRechazar);
-
-        btnConfirmar.addActionListener(e -> iniciarValidacionMovil(metodoPago));
-        btnRechazar.addActionListener(e -> rechazarPagoMovil());
+        btnPagar.addActionListener(e -> iniciarValidacionMovil(metodoPago));
     }
 
     private ImageIcon cargarQR(String nombre, int ancho, int alto) {
@@ -162,8 +150,7 @@ public class SimuladorPagoMovilCINEX extends JDialog {
     }
 
     private void iniciarValidacionMovil(String metodoPago) {
-        btnConfirmar.setEnabled(false);
-        btnRechazar.setEnabled(false);
+        btnPagar.setEnabled(false);
 
         Timer t1 = new Timer(700, e -> {
             lblMensaje.setText("Buscando operación " + metodoPago + "...");
@@ -207,20 +194,6 @@ public class SimuladorPagoMovilCINEX extends JDialog {
         t4.start();
     }
 
-    private void rechazarPagoMovil() {
-        btnConfirmar.setEnabled(false);
-        btnRechazar.setEnabled(false);
-
-        lblMensaje.setText("Pago móvil rechazado.");
-        lblEstado.setForeground(ROJO);
-        lblEstado.setText("El pago no fue confirmado por el cliente.");
-        barra.setValue(100);
-        pagoAprobado = false;
-
-        Timer cerrar = new Timer(900, e -> dispose());
-        cerrar.setRepeats(false);
-        cerrar.start();
-    }
 
     public boolean isPagoAprobado() {
         return pagoAprobado;

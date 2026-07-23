@@ -107,10 +107,10 @@ public class MenuAdministradorCINEXGUI extends JFrame {
         gridPanel.setMaximumSize(new Dimension(1100, 520));
         gridPanel.setPreferredSize(new Dimension(1100, 520));
 
-        MenuCard btnPeliculas = new MenuCard("🎬", "Películas", true);
-        MenuCard btnPrecios = new MenuCard("🏷", "Precios", false);
-        MenuCard btnFunciones = new MenuCard("⚙", "Funciones", false);
-        MenuCard btnUsuarios = new MenuCard("👥", "Usuarios", false);
+        MenuCard btnPeliculas = new MenuCard("🎬", "Registrar película", true);
+        MenuCard btnPrecios = new MenuCard("🏷", "Configurar precios", false);
+        MenuCard btnFunciones = new MenuCard("⚙", "Programar funciones", false);
+        MenuCard btnUsuarios = new MenuCard("👥", "Agregar usuarios", false);
         MenuCard btnCerrar = new MenuCard("↩", "Cerrar Sesión", false);
 
         gridPanel.add(btnPeliculas);
@@ -252,13 +252,37 @@ public class MenuAdministradorCINEXGUI extends JFrame {
             g2.drawString(icono, (getWidth() - 10 - iconW) / 2, 90);
 
             g2.setColor(colorTexto);
-            g2.setFont(new Font("Arial", Font.BOLD, 24));
-            FontMetrics fmText = g2.getFontMetrics();
-            int textW = fmText.stringWidth(texto);
-            g2.drawString(texto, (getWidth() - 10 - textW) / 2, 170);
+            g2.setFont(new Font("Arial", Font.BOLD, texto.length() > 20 ? 20 : 23));
+            dibujarTextoCentrado(g2, texto, 0, 157, getWidth() - 10, 28);
 
             g2.dispose();
         }
+        private void dibujarTextoCentrado(Graphics2D g2, String texto, int x, int y, int ancho, int altoLinea) {
+            FontMetrics fm = g2.getFontMetrics();
+            int limite = ancho - 24;
+            if (fm.stringWidth(texto) <= limite) {
+                int w = fm.stringWidth(texto);
+                g2.drawString(texto, x + (ancho - w) / 2, y + 10);
+                return;
+            }
+
+            String[] palabras = texto.split(" ");
+            String linea1 = "";
+            String linea2 = "";
+            for (String palabra : palabras) {
+                String prueba = linea1.isEmpty() ? palabra : linea1 + " " + palabra;
+                if (fm.stringWidth(prueba) <= limite && linea2.isEmpty()) {
+                    linea1 = prueba;
+                } else {
+                    linea2 = linea2.isEmpty() ? palabra : linea2 + " " + palabra;
+                }
+            }
+            int w1 = fm.stringWidth(linea1);
+            int w2 = fm.stringWidth(linea2);
+            g2.drawString(linea1, x + (ancho - w1) / 2, y);
+            g2.drawString(linea2, x + (ancho - w2) / 2, y + altoLinea);
+        }
+
     }
 
     public static void main(String[] args) {

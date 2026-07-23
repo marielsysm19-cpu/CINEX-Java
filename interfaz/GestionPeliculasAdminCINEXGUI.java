@@ -84,7 +84,7 @@ public class GestionPeliculasAdminCINEXGUI extends JFrame {
         this.controlPeliculas =
                 new ControlGestionarPeliculasCINEX();
 
-        setTitle("CINEX - Gestionar películas");
+        setTitle("CINEX - Registrar película");
         setSize(1180, 720);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -108,7 +108,7 @@ public class GestionPeliculasAdminCINEXGUI extends JFrame {
         textos.setOpaque(false);
         textos.setLayout(new BoxLayout(textos, BoxLayout.Y_AXIS));
 
-        JLabel titulo = new JLabel("Gestionar películas");
+        JLabel titulo = new JLabel("Registrar película");
         titulo.setForeground(BLANCO);
         titulo.setFont(new Font("Arial", Font.BOLD, 34));
         textos.add(titulo);
