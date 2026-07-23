@@ -1,0 +1,7 @@
+bin/
+*.class
+.vscode/
+qr_ventas/
+
+# Credenciales locales (no subir a GitHub)
+config/cinex.local.properties
