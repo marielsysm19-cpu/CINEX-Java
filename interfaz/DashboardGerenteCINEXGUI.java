@@ -2,6 +2,7 @@ package interfaz;
 
 import control.ControlReembolsosCINEX;
 import entidad.ResumenReembolsosCINEX;
+import entidad.ReembolsoCINEX;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -359,11 +360,23 @@ public class DashboardGerenteCINEXGUI extends JFrame {
             );
 
             modelo.setRowCount(0);
-            ArrayList<Object[]> reembolsos =
+            ArrayList<ReembolsoCINEX> reembolsos =
                     control.listarUltimosReembolsos(100);
 
-            for (Object[] fila : reembolsos) {
-                modelo.addRow(fila);
+            for (ReembolsoCINEX reembolso : reembolsos) {
+                modelo.addRow(new Object[]{
+                        reembolso.getIdReembolso(),
+                        reembolso.getNumeroVenta(),
+                        reembolso.getPelicula(),
+                        reembolso.getCliente(),
+                        reembolso.getDocumento(),
+                        reembolso.getAsientos(),
+                        reembolso.getEntradas(),
+                        reembolso.getMontoTotal(),
+                        reembolso.getEstado(),
+                        reembolso.getUsuarioTaquillero(),
+                        reembolso.getFecha()
+                });
             }
 
         } catch (Exception ex) {

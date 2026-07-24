@@ -8,15 +8,21 @@ public class SalaCINEX {
     private int capacidad;
     private int filas;
     private int columnas;
+    private String estado = "Activo";
 
     public SalaCINEX() {
     }
 
     public SalaCINEX(int idSala, String nombre, String tipo, int capacidad) {
+        this(idSala, nombre, tipo, capacidad, "Activo");
+    }
+
+    public SalaCINEX(int idSala, String nombre, String tipo, int capacidad, String estado) {
         this.idSala = idSala;
         this.nombre = valorSeguro(nombre);
         this.tipo = valorSeguro(tipo);
         setCapacidad(capacidad);
+        setEstado(estado);
     }
 
     public int getIdSala() {
@@ -66,6 +72,20 @@ public class SalaCINEX {
 
     public void setColumnas(int columnas) {
         this.columnas = Math.max(0, columnas);
+    }
+
+    public String getEstado() {
+        String valor = valorSeguro(estado);
+        return valor.isEmpty() ? "Activo" : valor;
+    }
+
+    public void setEstado(String estado) {
+        String valor = valorSeguro(estado);
+        this.estado = valor.isEmpty() ? "Activo" : valor;
+    }
+
+    public boolean estaActiva() {
+        return "Activo".equalsIgnoreCase(getEstado());
     }
 
     public String getDescripcion() {

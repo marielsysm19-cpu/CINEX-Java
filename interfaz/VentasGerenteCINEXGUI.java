@@ -8,7 +8,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -17,8 +16,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Locale;
-import control.BDCINEX;
-import control.ControlModuloReembolsosCINEX;
+import control.ControlConsultarHistorialVentasCINEX;
+import entidad.SalaCINEX;
+import entidad.VentaCINEX;
 
 
 public class VentasGerenteCINEXGUI extends JFrame {
@@ -52,6 +52,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
     private DefaultTableModel modelo;
 
     private String usuarioActual;
+    private final ControlConsultarHistorialVentasCINEX controlHistorialVentas = new ControlConsultarHistorialVentasCINEX();
 
     public VentasGerenteCINEXGUI(String usuario) {
         this.usuarioActual = usuario == null || usuario.trim().isEmpty() ? "gerente" : usuario.trim();
@@ -316,7 +317,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
         SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() {
-                return HistorialVentasBD.existenVentasRegistradas();
+                return controlHistorialVentas.existenVentasRegistradas();
             }
 
             @Override
@@ -406,7 +407,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
         SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() {
-                return HistorialVentasBD.existenVentasRegistradas();
+                return controlHistorialVentas.existenVentasRegistradas();
             }
 
             @Override
@@ -448,9 +449,8 @@ public class VentasGerenteCINEXGUI extends JFrame {
         cbSala.removeAllItems();
         cbSala.addItem("Todas");
 
-        ArrayList<String> salas = HistorialVentasBD.listarSalas();
-        for (String sala : salas) {
-            cbSala.addItem(sala);
+        for (SalaCINEX sala : controlHistorialVentas.listarSalas()) {
+            cbSala.addItem(sala.getNombre());
         }
     }
 
@@ -489,10 +489,10 @@ public class VentasGerenteCINEXGUI extends JFrame {
         lblEstadoConsulta.setText("Procesando consulta...");
         lblEstadoConsulta.setForeground(AMARILLO);
 
-        SwingWorker<ArrayList<VentaRegistro>, Void> worker = new SwingWorker<ArrayList<VentaRegistro>, Void>() {
+        SwingWorker<ArrayList<VentaCINEX>, Void> worker = new SwingWorker<ArrayList<VentaCINEX>, Void>() {
             @Override
-            protected ArrayList<VentaRegistro> doInBackground() {
-                return HistorialVentasBD.consultarVentas(fechaInicio, fechaFin, sala, metodo);
+            protected ArrayList<VentaCINEX> doInBackground() {
+                return controlHistorialVentas.consultarVentas(fechaInicio, fechaFin, sala, metodo);
             }
 
             @Override
@@ -501,7 +501,7 @@ public class VentasGerenteCINEXGUI extends JFrame {
                 btnBuscar.setText("BUSCAR");
 
                 try {
-                    ArrayList<VentaRegistro> ventas = get();
+                    ArrayList<VentaCINEX> ventas = get();
                     mostrarVentas(ventas);
 
                     if (ventas.isEmpty()) {
@@ -534,29 +534,37 @@ public class VentasGerenteCINEXGUI extends JFrame {
         return LocalDate.parse(texto, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
-    private void mostrarVentas(ArrayList<VentaRegistro> ventas) {
+    private void mostrarVentas(ArrayList<VentaCINEX> ventas) {
         modelo.setRowCount(0);
 
         double totalNeto = 0.0;
+        DateTimeFormatter fechaFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        DateTimeFormatter horaFmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
 
-        for (VentaRegistro v : ventas) {
-            totalNeto += v.totalNeto;
+        for (VentaCINEX v : ventas) {
+            totalNeto += v.getTotalNeto();
+
+            LocalDateTime fechaHora = v.getFechaHora();
+            String fecha = fechaHora == null ? "-" : fechaHora.toLocalDate().format(fechaFmt);
+            String hora = fechaHora == null ? "-" : fechaHora.toLocalTime().format(horaFmt)
+                    .replace("AM", "a. m.")
+                    .replace("PM", "p. m.");
 
             modelo.addRow(new Object[]{
-                    v.numeroVenta,
-                    v.fecha,
-                    v.hora,
-                    v.pelicula,
-                    v.sala,
-                    v.asientos,
-                    v.total,
-                    v.metodoPago,
-                    v.vendedor,
-                    v.estadoReembolso,
-                    v.entradasReembolsadas,
-                    v.asientosReembolsados,
-                    v.montoReembolsado,
-                    v.totalNeto
+                    v.getNumeroVenta(),
+                    fecha,
+                    hora,
+                    v.getPelicula(),
+                    v.getSala(),
+                    v.getAsientos(),
+                    v.getTotal(),
+                    v.getMetodoPago(),
+                    v.getVendedor(),
+                    v.getEstadoReembolso(),
+                    v.getEntradasReembolsadas(),
+                    v.getAsientosReembolsados(),
+                    v.getMontoReembolsado(),
+                    v.getTotalNeto()
             });
         }
 
@@ -1063,316 +1071,6 @@ public class VentasGerenteCINEXGUI extends JFrame {
         } catch (Exception e) {
             System.out.println("No se pudo cargar el logo: " + path);
             return new ImageIcon();
-        }
-    }
-
-    static class VentaRegistro {
-        String numeroVenta;
-        String fecha;
-        String hora;
-        String pelicula;
-        String sala;
-        String asientos;
-        double total;
-        String metodoPago;
-        String vendedor;
-        String estadoReembolso;
-        int entradasReembolsadas;
-        String asientosReembolsados;
-        double montoReembolsado;
-        double totalNeto;
-
-        VentaRegistro(
-                String numeroVenta,
-                String fecha,
-                String hora,
-                String pelicula,
-                String sala,
-                String asientos,
-                double total,
-                String metodoPago,
-                String vendedor,
-                String estadoReembolso,
-                int entradasReembolsadas,
-                String asientosReembolsados,
-                double montoReembolsado,
-                double totalNeto
-        ) {
-            this.numeroVenta = numeroVenta;
-            this.fecha = fecha;
-            this.hora = hora;
-            this.pelicula = pelicula;
-            this.sala = sala;
-            this.asientos = asientos;
-            this.total = total;
-            this.metodoPago = metodoPago;
-            this.vendedor = vendedor;
-            this.estadoReembolso = estadoReembolso;
-            this.entradasReembolsadas = entradasReembolsadas;
-            this.asientosReembolsados = asientosReembolsados;
-            this.montoReembolsado = montoReembolsado;
-            this.totalNeto = totalNeto;
-        }
-    }
-
-    static class HistorialVentasBD {
-
-        private static ConfigBD configBD;
-
-        private static class ConfigBD {
-            String fechaCol;
-            boolean tieneNumeroVenta;
-            boolean unirUsuarios;
-            String vendedorExpr;
-        }
-
-        private static synchronized ConfigBD obtenerConfigBD(Connection con) throws SQLException {
-            if (configBD == null) {
-                ConfigBD cfg = new ConfigBD();
-                cfg.fechaCol = columnaExiste(con, "ventas", "fecha_venta") ? "fecha_venta" : "fecha_hora";
-                cfg.tieneNumeroVenta = columnaExiste(con, "ventas", "numero_venta");
-                cfg.unirUsuarios = columnaExiste(con, "ventas", "id_usuario") && tablaExiste(con, "usuarios");
-                cfg.vendedorExpr = obtenerVendedorSelectExpr(con);
-                configBD = cfg;
-            }
-            return configBD;
-        }
-
-        static boolean existenVentasRegistradas() {
-            String sql = "SELECT 1 FROM ventas LIMIT 1";
-
-            try (Connection con = BDCINEX.conectar();
-                 PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-
-                return rs.next();
-
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        static ArrayList<String> listarSalas() {
-            ArrayList<String> salas = new ArrayList<>();
-
-            String sql = "SELECT nombre FROM salas ORDER BY nombre";
-
-            try (Connection con = BDCINEX.conectar();
-                 PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-                    salas.add(rs.getString("nombre"));
-                }
-
-            } catch (SQLException e) {
-                // Si falla, se mantiene el combo con "Todas".
-            }
-
-            return salas;
-        }
-
-        static ArrayList<VentaRegistro> consultarVentas(LocalDate inicio, LocalDate fin, String sala, String metodo) {
-            ArrayList<VentaRegistro> ventas = new ArrayList<>();
-            ControlModuloReembolsosCINEX.asegurarEstructura();
-
-            try (Connection con = BDCINEX.conectar()) {
-                ConfigBD cfg = obtenerConfigBD(con);
-                String fechaCol = cfg.fechaCol;
-
-                String numeroExpr = cfg.tieneNumeroVenta
-                        ? "IFNULL(MAX(v.numero_venta), CONCAT('VTA-', LPAD(v.id_venta, 6, '0')))"
-                        : "CONCAT('VTA-', LPAD(v.id_venta, 6, '0'))";
-                String vendedorExpr = cfg.vendedorExpr;
-
-                StringBuilder sql = new StringBuilder();
-                sql.append("SELECT ");
-                sql.append(numeroExpr).append(" AS numero_venta, ");
-                sql.append("DATE(v.").append(fechaCol).append(") AS fecha_venta, ");
-                sql.append("TIME(v.").append(fechaCol).append(") AS hora_venta, ");
-                sql.append("IFNULL(MIN(pel.titulo), '-') AS pelicula, ");
-                sql.append("IFNULL(MIN(s.nombre), '-') AS sala, ");
-                sql.append("IFNULL(GROUP_CONCAT(DISTINCT CONCAT(a.fila, a.numero) ORDER BY a.fila, a.numero SEPARATOR ', '), '-') AS asientos, ");
-                sql.append("IFNULL(v.total, 0) AS total, ");
-                sql.append("IFNULL(TRIM(pg.metodo_pago), '-') AS metodo_pago, ");
-                sql.append(vendedorExpr).append(" AS vendedor, ");
-                sql.append("IFNULL(MAX(ref.entradas_reembolsadas), 0) AS entradas_reembolsadas, ");
-                sql.append("IFNULL(MAX(ref.asientos_reembolsados), '-') AS asientos_reembolsados, ");
-                sql.append("IFNULL(MAX(ref.monto_reembolsado), 0) AS monto_reembolsado, ");
-                sql.append("GREATEST(0, IFNULL(v.total, 0) - IFNULL(MAX(ref.monto_reembolsado), 0)) AS total_neto, ");
-                sql.append("CASE ");
-                sql.append("WHEN IFNULL(MAX(ref.entradas_reembolsadas), 0) = 0 THEN 'Sin reembolso' ");
-                sql.append("WHEN IFNULL(MAX(ref.entradas_reembolsadas), 0) >= COUNT(e.id_entrada) THEN 'Reembolso total' ");
-                sql.append("ELSE 'Reembolso parcial' END AS estado_reembolso ");
-                sql.append("FROM ventas v ");
-                sql.append("LEFT JOIN pagos pg ON pg.id_venta = v.id_venta ");
-                sql.append("LEFT JOIN entradas e ON e.id_venta = v.id_venta ");
-                sql.append("LEFT JOIN asientos a ON a.id_asiento = e.id_asiento ");
-                sql.append("LEFT JOIN funciones f ON f.id_funcion = COALESCE(e.id_funcion, v.id_funcion) ");
-                sql.append("LEFT JOIN peliculas pel ON pel.id_pelicula = f.id_pelicula ");
-                sql.append("LEFT JOIN salas s ON s.id_sala = f.id_sala ");
-                sql.append("LEFT JOIN ( ");
-                sql.append("   SELECT r.id_venta, SUM(r.monto_total) AS monto_reembolsado, ");
-                sql.append("          COUNT(DISTINCT dr.id_entrada) AS entradas_reembolsadas, ");
-                sql.append("          GROUP_CONCAT(DISTINCT dr.asiento ORDER BY dr.asiento SEPARATOR ', ') AS asientos_reembolsados ");
-                sql.append("   FROM reembolsos r ");
-                sql.append("   LEFT JOIN detalle_reembolsos dr ON dr.id_reembolso = r.id_reembolso ");
-                sql.append("   GROUP BY r.id_venta ");
-                sql.append(") ref ON ref.id_venta = v.id_venta ");
-                if (cfg.unirUsuarios) {
-                    sql.append("LEFT JOIN usuarios u ON u.id_usuario = v.id_usuario ");
-                }
-                sql.append("WHERE v.").append(fechaCol).append(" >= ? AND v.").append(fechaCol).append(" < ? ");
-
-                ArrayList<Object> params = new ArrayList<>();
-                params.add(Timestamp.valueOf(inicio.atStartOfDay()));
-                params.add(Timestamp.valueOf(fin.plusDays(1).atStartOfDay()));
-
-                if (sala != null && !"Todas".equalsIgnoreCase(sala.trim())) {
-                    sql.append("AND s.nombre = ? ");
-                    params.add(sala);
-                }
-
-                String metodoBD = normalizarMetodoPago(metodo);
-                if (metodoBD != null && !"Todos".equalsIgnoreCase(metodoBD.trim())) {
-                    sql.append("AND pg.metodo_pago = ? ");
-                    params.add(metodoBD);
-                }
-
-                sql.append("GROUP BY v.id_venta, v.").append(fechaCol).append(", v.total, pg.metodo_pago ");
-                sql.append("ORDER BY v.").append(fechaCol).append(" DESC, v.id_venta DESC");
-
-                try (PreparedStatement ps = con.prepareStatement(sql.toString())) {
-                    for (int i = 0; i < params.size(); i++) {
-                        ps.setObject(i + 1, params.get(i));
-                    }
-
-                    try (ResultSet rs = ps.executeQuery()) {
-                        DateTimeFormatter fechaFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                        DateTimeFormatter horaFmt = DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
-
-                        while (rs.next()) {
-                            Date fecha = rs.getDate("fecha_venta");
-                            Time hora = rs.getTime("hora_venta");
-
-                            String fechaTexto = fecha == null ? "-" : fecha.toLocalDate().format(fechaFmt);
-                            String horaTexto = "-";
-
-                            if (hora != null) {
-                                horaTexto = hora.toLocalTime().format(horaFmt)
-                                        .replace("AM", "a. m.")
-                                        .replace("PM", "p. m.");
-                            }
-
-                            ventas.add(new VentaRegistro(
-                                    rs.getString("numero_venta"),
-                                    fechaTexto,
-                                    horaTexto,
-                                    rs.getString("pelicula"),
-                                    rs.getString("sala"),
-                                    rs.getString("asientos"),
-                                    rs.getDouble("total"),
-                                    rs.getString("metodo_pago"),
-                                    rs.getString("vendedor"),
-                                    rs.getString("estado_reembolso"),
-                                    rs.getInt("entradas_reembolsadas"),
-                                    rs.getString("asientos_reembolsados"),
-                                    rs.getDouble("monto_reembolsado"),
-                                    rs.getDouble("total_neto")
-                            ));
-                        }
-                    }
-                }
-
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-
-            return ventas;
-        }
-
-        private static String normalizarMetodoPago(String metodo) {
-            if (metodo == null) {
-                return "Todos";
-            }
-
-            String valor = metodo.trim();
-
-            if (valor.equalsIgnoreCase("Todos")) {
-                return "Todos";
-            }
-            if (valor.equalsIgnoreCase("Efectivo")) {
-                return "Efectivo";
-            }
-            if (valor.equalsIgnoreCase("Tarjeta Débito") || valor.equalsIgnoreCase("Tarjeta Debito")) {
-                return "Tarjeta Débito";
-            }
-            if (valor.equalsIgnoreCase("Tarjeta Crédito") || valor.equalsIgnoreCase("Tarjeta Credito")) {
-                return "Tarjeta Crédito";
-            }
-            if (valor.equalsIgnoreCase("Yape")) {
-                return "Yape";
-            }
-            if (valor.equalsIgnoreCase("Plin")) {
-                return "Plin";
-            }
-
-            return "Todos";
-        }
-
-        private static String obtenerVendedorSelectExpr(Connection con) throws SQLException {
-            if (columnaExiste(con, "ventas", "usuario")) {
-                return "IFNULL(MAX(v.usuario), '-')";
-            }
-            if (columnaExiste(con, "ventas", "vendedor")) {
-                return "IFNULL(MAX(v.vendedor), '-')";
-            }
-            if (columnaExiste(con, "ventas", "taquillero")) {
-                return "IFNULL(MAX(v.taquillero), '-')";
-            }
-            if (columnaExiste(con, "ventas", "id_usuario") && tablaExiste(con, "usuarios")) {
-                if (columnaExiste(con, "usuarios", "usuario")) {
-                    return "IFNULL(MAX(u.usuario), '-')";
-                }
-                if (columnaExiste(con, "usuarios", "nombre")) {
-                    return "IFNULL(MAX(u.nombre), '-')";
-                }
-            }
-            return "'-'";
-        }
-
-        private static boolean tablaExiste(Connection con, String tabla) throws SQLException {
-            DatabaseMetaData meta = con.getMetaData();
-            String catalogo = con.getCatalog();
-
-            try (ResultSet rs = meta.getTables(catalogo, null, tabla, null)) {
-                if (rs.next()) return true;
-            }
-
-            try (ResultSet rs = meta.getTables(catalogo, null, tabla.toLowerCase(), null)) {
-                if (rs.next()) return true;
-            }
-
-            try (ResultSet rs = meta.getTables(catalogo, null, tabla.toUpperCase(), null)) {
-                return rs.next();
-            }
-        }
-
-        private static boolean columnaExiste(Connection con, String tabla, String columna) throws SQLException {
-            DatabaseMetaData meta = con.getMetaData();
-            String catalogo = con.getCatalog();
-
-            try (ResultSet rs = meta.getColumns(catalogo, null, tabla, columna)) {
-                if (rs.next()) return true;
-            }
-
-            try (ResultSet rs = meta.getColumns(catalogo, null, tabla.toLowerCase(), columna)) {
-                if (rs.next()) return true;
-            }
-
-            try (ResultSet rs = meta.getColumns(catalogo, null, tabla.toUpperCase(), columna)) {
-                return rs.next();
-            }
         }
     }
 

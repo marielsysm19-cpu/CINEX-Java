@@ -1,6 +1,7 @@
 package interfaz;
 
 import control.ControlGestionarPreciosCINEX;
+import entidad.PrecioCINEX;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -422,24 +423,24 @@ public class PreciosAdminCINEXGUI extends JFrame {
         limpiarSeleccion();
         mostrarEstado("Consultando precios...", GRIS);
 
-        SwingWorker<ArrayList<Object[]>, Void> worker = new SwingWorker<ArrayList<Object[]>, Void>() {
+        SwingWorker<ArrayList<PrecioCINEX>, Void> worker = new SwingWorker<ArrayList<PrecioCINEX>, Void>() {
             @Override
-            protected ArrayList<Object[]> doInBackground() {
+            protected ArrayList<PrecioCINEX> doInBackground() {
                 return controlPrecios.listarPrecios();
             }
 
             @Override
             protected void done() {
                 try {
-                    ArrayList<Object[]> datos = get();
+                    ArrayList<PrecioCINEX> datos = get();
                     modelo.setRowCount(0);
 
                     double suma = 0;
 
-                    for (Object[] fila : datos) {
-                        int id = convertirEntero(fila[0]);
-                        String tipo = valorSeguro(fila[1]);
-                        double monto = convertirDouble(fila[2]);
+                    for (PrecioCINEX precio : datos) {
+                        int id = precio.getIdPrecio();
+                        String tipo = precio.getTipoEntrada();
+                        double monto = precio.getMonto();
 
                         modelo.addRow(new Object[]{
                                 id,
@@ -467,11 +468,9 @@ public class PreciosAdminCINEXGUI extends JFrame {
                     lblPromedio.setText("S/ 0.00");
                     mostrarEstado("No se pudieron cargar los precios.", ROJO);
 
-                    JOptionPane.showMessageDialog(
-                            PreciosAdminCINEXGUI.this,
-                            "No se pudieron recuperar los precios de la base de datos.",
-                            "Error de conexión",
-                            JOptionPane.ERROR_MESSAGE
+                    System.err.println(
+                            "[Precios] No se pudieron recuperar los precios: "
+                                    + ex.getMessage()
                     );
                 } finally {
                     tabla.setEnabled(true);
@@ -569,21 +568,15 @@ public class PreciosAdminCINEXGUI extends JFrame {
                         cargarDatos();
                     } else {
                         mostrarEstado("No se pudo actualizar la tarifa.", ROJO);
-                        JOptionPane.showMessageDialog(
-                                PreciosAdminCINEXGUI.this,
-                                "La base de datos no confirmó la actualización.",
-                                "No se pudo actualizar",
-                                JOptionPane.ERROR_MESSAGE
+                        System.err.println(
+                                "[Precios] La actualización no fue confirmada."
                         );
                     }
 
                 } catch (Exception ex) {
                     mostrarEstado("Ocurrió un error al actualizar.", ROJO);
-                    JOptionPane.showMessageDialog(
-                            PreciosAdminCINEXGUI.this,
-                            "Ocurrió un error al actualizar el precio.",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE
+                    System.err.println(
+                            "[Precios] Error al actualizar: " + ex.getMessage()
                     );
                 } finally {
                     bloquearMientrasGuarda(false);

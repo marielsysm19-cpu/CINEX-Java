@@ -122,14 +122,12 @@ public class MenuTaquilleroCINEXGUI extends JFrame {
 
         MenuCard btnVenta = new MenuCard("🎟", "Venta de entrada", true);
         MenuCard btnConsultarPeliculas = new MenuCard("🎬", "Consultar película", false);
-        MenuCard btnRegistroCliente = new MenuCard("👤", "Búsqueda o registro de cliente", false);
         MenuCard btnHistorial = new MenuCard("🧾", "Historial de compras", false);
         MenuCard btnReembolso = new MenuCard("💵", "Reembolso de entradas", false);
         MenuCard btnCerrar = new MenuCard("↩", "Cerrar Sesión", false);
 
         gridPanel.add(btnVenta);
         gridPanel.add(btnConsultarPeliculas);
-        gridPanel.add(btnRegistroCliente);
         gridPanel.add(btnHistorial);
         gridPanel.add(btnReembolso);
         gridPanel.add(btnCerrar);
@@ -148,13 +146,6 @@ public class MenuTaquilleroCINEXGUI extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 CINEXTransiciones.cambiar(MenuTaquilleroCINEXGUI.this, new ConsultarPeliculasCINEXGUI(usuarioActual));
-            }
-        });
-
-        btnRegistroCliente.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                CINEXTransiciones.cambiar(MenuTaquilleroCINEXGUI.this, new RegistroClienteCU4CINEXGUI(usuarioActual));
             }
         });
 

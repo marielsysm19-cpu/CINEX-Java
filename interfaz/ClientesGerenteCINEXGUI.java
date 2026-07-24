@@ -17,7 +17,8 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import control.BDCINEX;
+import control.ControlClientesGerenteCINEX;
+import entidad.ClienteCINEX;
 
 public class ClientesGerenteCINEXGUI extends JFrame {
 
@@ -44,7 +45,8 @@ public class ClientesGerenteCINEXGUI extends JFrame {
     private DefaultTableModel modeloTabla;
     private JScrollPane scrollTabla;
 
-    private ArrayList<Cliente> clientes = new ArrayList<>();
+    private ArrayList<ClienteCINEX> clientes = new ArrayList<>();
+    private final ControlClientesGerenteCINEX controlClientes = new ControlClientesGerenteCINEX();
 
     public ClientesGerenteCINEXGUI() {
         this("gerente");
@@ -106,12 +108,12 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         clientes.clear();
 
         try {
-            for (Object[] fila : BDCINEX.listarClientesCompradores()) {
-                String documento = fila[0] == null ? "" : fila[0].toString().trim();
-                String nombre = fila[1] == null ? "" : fila[1].toString().trim();
+            for (ClienteCINEX cliente : controlClientes.listarClientesCompradores()) {
+                String documento = cliente.getNumeroDocumento();
+                String nombre = cliente.getNombre();
 
                 if (!documento.isEmpty() && !nombre.isEmpty()) {
-                    clientes.add(new Cliente(obtenerTipoDocumento(documento), documento, nombre));
+                    clientes.add(cliente);
                 }
             }
         } catch (Exception e) {
@@ -436,14 +438,14 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         scrollTabla.getHorizontalScrollBar().setBackground(AZUL_PANEL_2);
     }
 
-    private void cargarTabla(ArrayList<Cliente> lista) {
+    private void cargarTabla(ArrayList<ClienteCINEX> lista) {
         modeloTabla.setRowCount(0);
 
-        for (Cliente c : lista) {
+        for (ClienteCINEX c : lista) {
             modeloTabla.addRow(new Object[]{
-                    c.tipoDocumento,
-                    c.documento,
-                    c.nombre
+                    c.getTipoDocumento(),
+                    c.getNumeroDocumento(),
+                    c.getNombre()
             });
         }
 
@@ -452,12 +454,12 @@ public class ClientesGerenteCINEXGUI extends JFrame {
 
     private void filtrarClientes() {
         String filtro = txtBuscar.getText().trim().toLowerCase();
-        ArrayList<Cliente> resultado = new ArrayList<>();
+        ArrayList<ClienteCINEX> resultado = new ArrayList<>();
 
-        for (Cliente c : clientes) {
-            if (c.tipoDocumento.toLowerCase().contains(filtro) ||
-                    c.documento.toLowerCase().contains(filtro) ||
-                    c.nombre.toLowerCase().contains(filtro)) {
+        for (ClienteCINEX c : clientes) {
+            if (c.getTipoDocumento().toLowerCase().contains(filtro) ||
+                    c.getNumeroDocumento().toLowerCase().contains(filtro) ||
+                    c.getNombre().toLowerCase().contains(filtro)) {
                 resultado.add(c);
             }
         }
@@ -480,24 +482,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
             lblMensaje.setText("Clientes compradores encontrados: " + cantidadVisible);
             lblMensaje.setForeground(new Color(40, 220, 90));
         }
-    }
-
-    private String obtenerTipoDocumento(String documento) {
-        if (documento == null) {
-            return "DOC.";
-        }
-
-        documento = documento.trim();
-
-        if (documento.length() == 8) {
-            return "DNI";
-        }
-
-        if (documento.length() == 9) {
-            return "C.E.";
-        }
-
-        return "DOC.";
     }
 
     private void actualizarFechaHora() {
@@ -534,18 +518,6 @@ public class ClientesGerenteCINEXGUI extends JFrame {
         } catch (Exception e) {
             System.out.println("Error al cargar imagen: " + nombre);
             return new ImageIcon();
-        }
-    }
-
-    private class Cliente {
-        String tipoDocumento;
-        String documento;
-        String nombre;
-
-        public Cliente(String tipoDocumento, String documento, String nombre) {
-            this.tipoDocumento = tipoDocumento;
-            this.documento = documento;
-            this.nombre = nombre;
         }
     }
 

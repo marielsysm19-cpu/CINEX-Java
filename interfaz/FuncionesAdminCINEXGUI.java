@@ -1,7 +1,6 @@
 package interfaz;
 
 import control.ControlGestionarFuncionesCINEX;
-import control.ControlGestionarFuncionesCINEX.DatosFuncion;
 import control.ControlGestionarFuncionesCINEX.ResultadoModificacion;
 import control.ControlNotificacionesCINEX;
 import control.ControlProgramaFuncionCINEX;
@@ -9,6 +8,7 @@ import control.ControlProgramaFuncionCINEX.ResultadoProgramacion;
 import control.ControlProgramaFuncionCINEX.SalaItem;
 import control.ControlProgramaFuncionCINEX.TipoResultado;
 import entidad.PeliculaCINEX;
+import entidad.FuncionCINEX;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -703,15 +703,13 @@ public class FuncionesAdminCINEXGUI extends JFrame {
                     bloquearFormulario(true);
                     mostrarValidacion(
                             "No se pudieron cargar los datos",
-                            "Revise la conexión con Railway e intente refrescar la lista.",
+                            "No fue posible cargar la información necesaria.",
                             ROJO
                     );
 
-                    JOptionPane.showMessageDialog(
-                            FuncionesAdminCINEXGUI.this,
-                            "No se pudieron recuperar las películas o las salas.",
-                            "Error de conexión",
-                            JOptionPane.ERROR_MESSAGE
+                    System.err.println(
+                            "[Funciones] No se pudieron recuperar películas o salas: "
+                                    + ex.getMessage()
                     );
                 } finally {
                     cargandoCatalogos = false;
@@ -728,16 +726,16 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         lblMensaje.setForeground(GRIS);
         btnCancelarFuncion.setEnabled(false);
 
-        SwingWorker<ArrayList<Object[]>, Void> worker = new SwingWorker<ArrayList<Object[]>, Void>() {
+        SwingWorker<ArrayList<FuncionCINEX>, Void> worker = new SwingWorker<ArrayList<FuncionCINEX>, Void>() {
             @Override
-            protected ArrayList<Object[]> doInBackground() {
+            protected ArrayList<FuncionCINEX> doInBackground() {
                 return controlFunciones.listarFunciones();
             }
 
             @Override
             protected void done() {
                 try {
-                    ArrayList<Object[]> datos = get();
+                    ArrayList<FuncionCINEX> datos = get();
                     modelo.setRowCount(0);
                     duracionPorFuncion.clear();
 
@@ -746,15 +744,13 @@ public class FuncionesAdminCINEXGUI extends JFrame {
                     totalFinalizadasBD = 0;
                     totalCanceladasBD = 0;
 
-                    for (Object[] fila : datos) {
+                    for (FuncionCINEX funcion : datos) {
                         Object[] normalizada =
-                                normalizarFilaFuncion(fila);
+                                normalizarFilaFuncion(funcion);
 
-                        int idFuncion =
-                                convertirEntero(normalizada[0]);
+                        int idFuncion = funcion.getIdFuncion();
 
-                        int duracion =
-                                convertirEntero(fila, 6);
+                        int duracion = funcion.getDuracionMinutos();
 
                         duracionPorFuncion.put(
                                 idFuncion,
@@ -819,18 +815,22 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         worker.execute();
     }
 
-    private Object[] normalizarFilaFuncion(Object[] fila) {
+    private Object[] normalizarFilaFuncion(FuncionCINEX funcion) {
         Object[] salida = new Object[6];
-        salida[0] = convertirEntero(fila, 0);
-        salida[1] = valorSeguro(fila, 1);
-        salida[2] = valorSeguro(fila, 2);
-        salida[3] = valorSeguro(fila, 3);
-        salida[4] = valorSeguro(fila, 4);
+        salida[0] = funcion.getIdFuncion();
+        salida[1] = funcion.getPelicula();
+        salida[2] = funcion.getTipoSala().isEmpty()
+                ? funcion.getSala()
+                : funcion.getSala() + " - " + funcion.getTipoSala();
+        salida[3] = funcion.fechaFormateada();
+        salida[4] = funcion.getHora() == null
+                ? "-"
+                : funcion.getHora().format(DateTimeFormatter.ofPattern("HH:mm"));
         salida[5] = determinarEstadoFuncion(
                 salida[3],
                 salida[4],
-                convertirEntero(fila, 6),
-                valorSeguro(fila, 5)
+                funcion.getDuracionMinutos(),
+                funcion.getEstado()
         );
         return salida;
     }
@@ -1144,7 +1144,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
         bloquearMientrasProcesa(true);
         mostrarValidacion(
                 "Guardando programación",
-                "Registrando la nueva función en Railway...",
+                "Registrando la nueva función...",
                 AMARILLO
         );
 
@@ -1207,7 +1207,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
                 } catch (Exception ex) {
                     mostrarValidacion(
                             "No se pudo guardar",
-                            "Ocurrió un error al registrar la función en la base de datos.",
+                            "No se pudo registrar la función.",
                             ROJO
                     );
                     JOptionPane.showMessageDialog(
@@ -1254,7 +1254,7 @@ public class FuncionesAdminCINEXGUI extends JFrame {
 
         int filaModelo = tabla.convertRowIndexToModel(filaVista);
         int idFuncion = convertirEntero(modelo.getValueAt(filaModelo, 0));
-        DatosFuncion datos = controlFunciones.obtenerFuncion(idFuncion);
+        FuncionCINEX datos = controlFunciones.obtenerFuncion(idFuncion);
 
         if (datos == null) {
             return;

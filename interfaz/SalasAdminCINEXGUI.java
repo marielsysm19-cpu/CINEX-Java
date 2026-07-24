@@ -1,6 +1,7 @@
 package interfaz;
 
 import control.ControlGestionarSalasCINEX;
+import entidad.SalaCINEX;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
@@ -131,10 +132,16 @@ public class SalasAdminCINEXGUI extends JFrame {
 
     private void cargarDatos() {
         modelo.setRowCount(0);
-        ArrayList<Object[]> datos = controlSalas.listarSalas();
+        ArrayList<SalaCINEX> datos = controlSalas.listarSalas();
 
-        for (Object[] fila : datos) {
-            modelo.addRow(fila);
+        for (SalaCINEX sala : datos) {
+            modelo.addRow(new Object[]{
+                    sala.getIdSala(),
+                    sala.getNombre(),
+                    sala.getCapacidad(),
+                    sala.getTipo(),
+                    sala.getEstado()
+            });
         }
 
         lblMensaje.setText(datos.isEmpty() ? "No existen salas registradas." : "Salas encontradas: " + datos.size());

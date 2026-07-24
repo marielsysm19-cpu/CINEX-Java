@@ -19,14 +19,15 @@ import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.sql.*;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 
-import control.BDCINEX;
-import control.ControlModuloReembolsosCINEX;
+import control.ControlBuscarClienteCINEX;
+import control.ControlConsultarHistorialCINEX;
+import entidad.ClienteCINEX;
+import entidad.EntradaCINEX;
+
 
 public class HistorialClientesCINEXGUI extends JFrame {
 
@@ -65,7 +66,7 @@ public class HistorialClientesCINEXGUI extends JFrame {
     private JLabel lblUltimaCompra;
 
     private String usuarioActual;
-    private ClienteInfo clienteSeleccionado;
+    private ClienteCINEX clienteSeleccionado;
 
     public HistorialClientesCINEXGUI() {
         this("taquillero");
@@ -504,10 +505,10 @@ public class HistorialClientesCINEXGUI extends JFrame {
 
         mostrarEstado("Buscando información registrada...", AMARILLO);
 
-        SwingWorker<ArrayList<ClienteInfo>, Void> worker = new SwingWorker<ArrayList<ClienteInfo>, Void>() {
+        SwingWorker<ArrayList<ClienteCINEX>, Void> worker = new SwingWorker<ArrayList<ClienteCINEX>, Void>() {
             @Override
-            protected ArrayList<ClienteInfo> doInBackground() {
-                return HistorialBD.buscarClientes(tipo, busqueda);
+            protected ArrayList<ClienteCINEX> doInBackground() {
+                return ControlBuscarClienteCINEX.buscarCliente(tipo, busqueda);
             }
 
             @Override
@@ -516,7 +517,7 @@ public class HistorialClientesCINEXGUI extends JFrame {
                 btnBuscar.setText("BUSCAR CLIENTE");
 
                 try {
-                    ArrayList<ClienteInfo> clientes = get();
+                    ArrayList<ClienteCINEX> clientes = get();
 
                     if (clientes.isEmpty()) {
                         clienteSeleccionado = null;
@@ -532,8 +533,8 @@ public class HistorialClientesCINEXGUI extends JFrame {
                         return;
                     }
 
-                    for (ClienteInfo c : clientes) {
-                        modeloClientes.addRow(new Object[]{c.dni, c.nombre});
+                    for (ClienteCINEX c : clientes) {
+                        modeloClientes.addRow(new Object[]{c.getNumeroDocumento(), c.getNombre()});
                     }
 
                     tablaClientes.setRowSelectionInterval(0, 0);
@@ -605,20 +606,20 @@ public class HistorialClientesCINEXGUI extends JFrame {
         String dni = String.valueOf(modeloClientes.getValueAt(fila, 0));
         String nombre = String.valueOf(modeloClientes.getValueAt(fila, 1));
 
-        clienteSeleccionado = HistorialBD.obtenerClientePorDocumento(dni);
+        clienteSeleccionado = ControlBuscarClienteCINEX.consultarCliente(dni);
 
         if (clienteSeleccionado == null) {
-            clienteSeleccionado = new ClienteInfo(-1, dni, nombre);
+            clienteSeleccionado = new ClienteCINEX(-1, dni, nombre);
         }
 
-        lblNombreCliente.setText("Cliente: " + clienteSeleccionado.nombre);
-        lblDocumentoCliente.setText("Documento: " + clienteSeleccionado.dni);
+        lblNombreCliente.setText("Cliente: " + clienteSeleccionado.getNombre());
+        lblDocumentoCliente.setText("Documento: " + clienteSeleccionado.getNumeroDocumento());
 
-        actualizarBotonVerHistorial(clienteSeleccionado.idCliente > 0);
+        actualizarBotonVerHistorial(clienteSeleccionado.getIdCliente() > 0);
     }
 
     private void cargarHistorialClienteSeleccionado() {
-        if (clienteSeleccionado == null || clienteSeleccionado.idCliente <= 0) {
+        if (clienteSeleccionado == null || clienteSeleccionado.getIdCliente() <= 0) {
             JOptionPane.showMessageDialog(
                     this,
                     "Seleccione un cliente registrado.",
@@ -634,20 +635,24 @@ public class HistorialClientesCINEXGUI extends JFrame {
 
         mostrarEstado("Consultando historial de compras...", AMARILLO);
 
-        SwingWorker<ArrayList<CompraCliente>, Void> worker = new SwingWorker<ArrayList<CompraCliente>, Void>() {
+        SwingWorker<ArrayList<EntradaCINEX>, Void> worker = new SwingWorker<ArrayList<EntradaCINEX>, Void>() {
             @Override
-            protected ArrayList<CompraCliente> doInBackground() {
-                return HistorialBD.consultarHistorialCompras(clienteSeleccionado.idCliente);
+            protected ArrayList<EntradaCINEX> doInBackground() {
+                try {
+                    return ControlConsultarHistorialCINEX.consultarHistorialCompras(clienteSeleccionado.getIdCliente());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             @Override
             protected void done() {
                 btnBuscar.setEnabled(true);
                 btnVerHistorial.setText("VER HISTORIAL");
-                actualizarBotonVerHistorial(clienteSeleccionado != null && clienteSeleccionado.idCliente > 0);
+                actualizarBotonVerHistorial(clienteSeleccionado != null && clienteSeleccionado.getIdCliente() > 0);
 
                 try {
-                    ArrayList<CompraCliente> compras = get();
+                    ArrayList<EntradaCINEX> compras = get();
                     mostrarHistorial(compras);
 
                     if (compras.isEmpty()) {
@@ -672,36 +677,36 @@ public class HistorialClientesCINEXGUI extends JFrame {
         worker.execute();
     }
 
-    private void mostrarHistorial(ArrayList<CompraCliente> compras) {
+    private void mostrarHistorial(ArrayList<EntradaCINEX> compras) {
         modeloHistorial.setRowCount(0);
 
         double totalGastado = 0;
         String ultimaCompra = "-";
 
         for (int i = 0; i < compras.size(); i++) {
-            CompraCliente c = compras.get(i);
-            totalGastado += c.totalNeto;
+            EntradaCINEX c = compras.get(i);
+            totalGastado += c.getTotalNeto();
 
             if (i == 0) {
-                ultimaCompra = c.fechaCompraCorta;
+                ultimaCompra = c.getFechaCompraCorta();
             }
 
             modeloHistorial.addRow(new Object[]{
-                    c.numeroVenta,
-                    c.fechaCompra,
-                    c.pelicula,
-                    c.funcion,
-                    c.sala,
-                    c.asientos,
-                    c.cantidadEntradas,
-                    c.metodoPago,
-                    c.total,
-                    c.estado,
-                    c.estadoReembolso,
-                    c.entradasReembolsadas,
-                    c.asientosReembolsados,
-                    c.montoReembolsado,
-                    c.totalNeto
+                    c.getNumeroVenta(),
+                    c.getFechaCompra(),
+                    c.getPelicula(),
+                    c.getFuncion(),
+                    c.getSala(),
+                    c.getAsientos(),
+                    c.getCantidadEntradas(),
+                    c.getMetodoPago(),
+                    c.getTotal(),
+                    c.getEstado(),
+                    c.getEstadoReembolso(),
+                    c.getEntradasReembolsadas(),
+                    c.getAsientosReembolsados(),
+                    c.getMontoReembolsado(),
+                    c.getTotalNeto()
             });
         }
 
@@ -1088,311 +1093,6 @@ public class HistorialClientesCINEXGUI extends JFrame {
         } catch (Exception e) {
             System.out.println("Error al cargar imagen: " + nombre);
             return new ImageIcon();
-        }
-    }
-
-    static class ClienteInfo {
-        int idCliente;
-        String dni;
-        String nombre;
-        ClienteInfo(int idCliente, String dni, String nombre) {
-            this.idCliente = idCliente;
-            this.dni = dni == null ? "" : dni;
-            this.nombre = nombre == null ? "" : nombre;
-        }
-    }
-
-    static class CompraCliente {
-        String numeroVenta;
-        String fechaCompra;
-        String fechaCompraCorta;
-        String pelicula;
-        String funcion;
-        String sala;
-        String asientos;
-        int cantidadEntradas;
-        String metodoPago;
-        double total;
-        String estado;
-        String estadoReembolso;
-        int entradasReembolsadas;
-        String asientosReembolsados;
-        double montoReembolsado;
-        double totalNeto;
-
-        CompraCliente(
-                String numeroVenta,
-                String fechaCompra,
-                String fechaCompraCorta,
-                String pelicula,
-                String funcion,
-                String sala,
-                String asientos,
-                int cantidadEntradas,
-                String metodoPago,
-                double total,
-                String estado,
-                String estadoReembolso,
-                int entradasReembolsadas,
-                String asientosReembolsados,
-                double montoReembolsado,
-                double totalNeto
-        ) {
-            this.numeroVenta = numeroVenta;
-            this.fechaCompra = fechaCompra;
-            this.fechaCompraCorta = fechaCompraCorta;
-            this.pelicula = pelicula;
-            this.funcion = funcion;
-            this.sala = sala;
-            this.asientos = asientos;
-            this.cantidadEntradas = cantidadEntradas;
-            this.metodoPago = metodoPago;
-            this.total = total;
-            this.estado = estado;
-            this.estadoReembolso = estadoReembolso;
-            this.entradasReembolsadas = entradasReembolsadas;
-            this.asientosReembolsados = asientosReembolsados;
-            this.montoReembolsado = montoReembolsado;
-            this.totalNeto = totalNeto;
-        }
-    }
-
-    static class HistorialBD {
-
-        public static ArrayList<ClienteInfo> buscarClientes(String tipo, String busqueda) {
-            ArrayList<ClienteInfo> lista = new ArrayList<>();
-
-            String dato = busqueda == null ? "" : busqueda.trim();
-
-            if (dato.isEmpty()) {
-                return lista;
-            }
-
-            String sql;
-
-            boolean buscarPorDocumento = "DNI".equalsIgnoreCase(tipo) || "C.E.".equalsIgnoreCase(tipo) || "CE".equalsIgnoreCase(tipo);
-            boolean buscarPorNombre = "Nombre".equalsIgnoreCase(tipo);
-
-            if (buscarPorDocumento) {
-                sql = "SELECT id_cliente, dni, nombre " +
-                        "FROM clientes " +
-                        "WHERE dni = ? " +
-                        "ORDER BY nombre ASC";
-            } else if (buscarPorNombre) {
-                sql = "SELECT id_cliente, dni, nombre " +
-                        "FROM clientes " +
-                        "WHERE nombre LIKE ? " +
-                        "ORDER BY nombre ASC";
-            } else {
-                return lista;
-            }
-
-            try (Connection con = BDCINEX.conectar();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-
-                if (buscarPorDocumento) {
-                    ps.setString(1, dato);
-                } else {
-                    ps.setString(1, "%" + dato + "%");
-                }
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        lista.add(new ClienteInfo(
-                                rs.getInt("id_cliente"),
-                                rs.getString("dni"),
-                                rs.getString("nombre")
-                        ));
-                    }
-                }
-
-            } catch (SQLException e) {
-                mostrarErrorBD("Error al buscar cliente", e);
-            }
-
-            return lista;
-        }
-
-        public static ClienteInfo obtenerClientePorDocumento(String dni) {
-            if (dni == null || dni.trim().isEmpty()) {
-                return null;
-            }
-
-            String sql = "SELECT id_cliente, dni, nombre FROM clientes WHERE dni = ? LIMIT 1";
-
-            try (Connection con = BDCINEX.conectar();
-                 PreparedStatement ps = con.prepareStatement(sql)) {
-
-                ps.setString(1, dni.trim());
-
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        return new ClienteInfo(
-                                rs.getInt("id_cliente"),
-                                rs.getString("dni"),
-                                rs.getString("nombre")
-                        );
-                    }
-                }
-
-            } catch (SQLException e) {
-                mostrarErrorBD("Error al obtener cliente", e);
-            }
-
-            return null;
-        }
-
-        public static ArrayList<CompraCliente> consultarHistorialCompras(int idCliente) {
-            ArrayList<CompraCliente> lista = new ArrayList<>();
-            ControlModuloReembolsosCINEX.asegurarEstructura();
-
-            try (Connection con = BDCINEX.conectar()) {
-                String columnaFechaVenta = columnaExiste(con, "ventas", "fecha_venta") ? "fecha_venta" : "fecha_hora";
-                boolean tieneIdFuncionVenta = columnaExiste(con, "ventas", "id_funcion");
-                boolean tieneEstadoPago = columnaExiste(con, "pagos", "estado");
-
-                String funcionJoin = tieneIdFuncionVenta
-                        ? "LEFT JOIN funciones f ON f.id_funcion = COALESCE(v.id_funcion, ed.id_funcion) "
-                        : "LEFT JOIN funciones f ON f.id_funcion = ed.id_funcion ";
-
-                String estadoPagoSelect = tieneEstadoPago ? "IFNULL(p.estado, '-') AS estado_pago, " : "'-' AS estado_pago, ";
-
-                String sql =
-                        "SELECT v.id_venta, " +
-                                "IFNULL(v.numero_venta, CONCAT('VTA-', v.id_venta)) AS numero_venta, " +
-                                "v." + columnaFechaVenta + " AS fecha_compra, " +
-                                "v.total, " +
-                                "IFNULL(v.estado, 'Registrada') AS estado_venta, " +
-                                "IFNULL(p.metodo_pago, '-') AS metodo_pago, " +
-                                estadoPagoSelect +
-                                "IFNULL(pel.titulo, '-') AS pelicula, " +
-                                "IFNULL(s.nombre, '-') AS sala, " +
-                                "IFNULL(DATE_FORMAT(f.fecha, '%d/%m/%Y'), '-') AS fecha_funcion, " +
-                                "IFNULL(TIME_FORMAT(f.hora, '%h:%i %p'), '-') AS hora_funcion, " +
-                                "IFNULL(ed.asientos, '-') AS asientos, " +
-                                "IFNULL(ed.cantidad_entradas, 0) AS cantidad_entradas, " +
-                                "IFNULL(ref.entradas_reembolsadas, 0) AS entradas_reembolsadas, " +
-                                "IFNULL(ref.asientos_reembolsados, '') AS asientos_reembolsados, " +
-                                "IFNULL(ref.monto_reembolsado, 0) AS monto_reembolsado, " +
-                                "GREATEST(0, v.total - IFNULL(ref.monto_reembolsado, 0)) AS total_neto, " +
-                                "CASE " +
-                                "WHEN IFNULL(ref.entradas_reembolsadas, 0) = 0 THEN 'Sin reembolso' " +
-                                "WHEN IFNULL(ref.entradas_reembolsadas, 0) >= IFNULL(ed.cantidad_entradas, 0) THEN 'Reembolso total' " +
-                                "ELSE 'Reembolso parcial' END AS estado_reembolso " +
-                                "FROM ventas v " +
-                                "LEFT JOIN pagos p ON p.id_venta = v.id_venta " +
-                                "LEFT JOIN ( " +
-                                "   SELECT e.id_venta, MIN(e.id_funcion) AS id_funcion, COUNT(*) AS cantidad_entradas, " +
-                                "          GROUP_CONCAT(CONCAT(a.fila, a.numero) ORDER BY a.fila, a.numero SEPARATOR ', ') AS asientos " +
-                                "   FROM entradas e " +
-                                "   LEFT JOIN asientos a ON a.id_asiento = e.id_asiento " +
-                                "   WHERE e.estado IS NULL OR e.estado <> 'Anulada' " +
-                                "   GROUP BY e.id_venta " +
-                                ") ed ON ed.id_venta = v.id_venta " +
-                                "LEFT JOIN ( " +
-                                "   SELECT r.id_venta, SUM(r.monto_total) AS monto_reembolsado, " +
-                                "          COUNT(DISTINCT dr.id_entrada) AS entradas_reembolsadas, " +
-                                "          GROUP_CONCAT(DISTINCT dr.asiento ORDER BY dr.asiento SEPARATOR ', ') AS asientos_reembolsados " +
-                                "   FROM reembolsos r " +
-                                "   LEFT JOIN detalle_reembolsos dr ON dr.id_reembolso = r.id_reembolso " +
-                                "   GROUP BY r.id_venta " +
-                                ") ref ON ref.id_venta = v.id_venta " +
-                                funcionJoin +
-                                "LEFT JOIN peliculas pel ON pel.id_pelicula = f.id_pelicula " +
-                                "LEFT JOIN salas s ON s.id_sala = f.id_sala " +
-                                "WHERE v.id_cliente = ? " +
-                                "ORDER BY v." + columnaFechaVenta + " DESC, v.id_venta DESC";
-
-                try (PreparedStatement ps = con.prepareStatement(sql)) {
-                    ps.setInt(1, idCliente);
-
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            Timestamp fecha = rs.getTimestamp("fecha_compra");
-
-                            String fechaCompra = formatearFechaHora(fecha);
-                            String fechaCorta = formatearFechaCorta(fecha);
-                            String funcion = rs.getString("fecha_funcion") + " - " + rs.getString("hora_funcion");
-                            String estado = rs.getString("estado_venta");
-
-                            lista.add(new CompraCliente(
-                                    rs.getString("numero_venta"),
-                                    fechaCompra,
-                                    fechaCorta,
-                                    rs.getString("pelicula"),
-                                    funcion,
-                                    rs.getString("sala"),
-                                    rs.getString("asientos"),
-                                    rs.getInt("cantidad_entradas"),
-                                    rs.getString("metodo_pago"),
-                                    rs.getDouble("total"),
-                                    estado,
-                                    rs.getString("estado_reembolso"),
-                                    rs.getInt("entradas_reembolsadas"),
-                                    rs.getString("asientos_reembolsados"),
-                                    rs.getDouble("monto_reembolsado"),
-                                    rs.getDouble("total_neto")
-                            ));
-                        }
-                    }
-                }
-
-            } catch (SQLException e) {
-                mostrarErrorBD("Error al consultar historial de compras", e);
-            }
-
-            return lista;
-        }
-
-        private static boolean columnaExiste(Connection con, String tabla, String columna) {
-            try {
-                DatabaseMetaData meta = con.getMetaData();
-                String catalogo = con.getCatalog();
-
-                try (ResultSet rs = meta.getColumns(catalogo, null, tabla, columna)) {
-                    if (rs.next()) return true;
-                }
-
-                try (ResultSet rs = meta.getColumns(catalogo, null, tabla.toLowerCase(), columna)) {
-                    if (rs.next()) return true;
-                }
-
-                try (ResultSet rs = meta.getColumns(catalogo, null, tabla.toUpperCase(), columna)) {
-                    if (rs.next()) return true;
-                }
-
-                try (ResultSet rs = meta.getColumns(null, null, tabla, columna)) {
-                    return rs.next();
-                }
-
-            } catch (SQLException e) {
-                return false;
-            }
-        }
-
-        private static String formatearFechaHora(Timestamp fecha) {
-            if (fecha == null) {
-                return "-";
-            }
-
-            return new SimpleDateFormat("dd/MM/yyyy hh:mm a").format(fecha);
-        }
-
-        private static String formatearFechaCorta(Timestamp fecha) {
-            if (fecha == null) {
-                return "-";
-            }
-
-            return new SimpleDateFormat("dd/MM").format(fecha);
-        }
-
-        private static void mostrarErrorBD(String titulo, Exception e) {
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(
-                    null,
-                    titulo + ":\n" + e.getMessage(),
-                    "Error de base de datos",
-                    JOptionPane.ERROR_MESSAGE
-            ));
         }
     }
 

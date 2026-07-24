@@ -4,6 +4,13 @@ import entidad.AsientoCINEX;
 import entidad.FuncionCINEX;
 import entidad.ReferenciaFuncionCINEX;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -16,11 +23,10 @@ public class ControlVerificarDisponibilidadCINEX {
     ) {
         LinkedHashSet<String> ocupados = new LinkedHashSet<>();
 
-        ArrayList<String> datos =
-                BDCINEX.listarAsientosOcupados(
-                        pelicula,
-                        referenciaFuncion
-                );
+        ArrayList<String> datos = consultarCodigosOcupados(
+                pelicula,
+                referenciaFuncion
+        );
 
         if (datos == null) {
             return ocupados;
@@ -41,12 +47,29 @@ public class ControlVerificarDisponibilidadCINEX {
             String pelicula,
             String referenciaFuncion
     ) {
-        int capacidad = BDCINEX.obtenerCapacidadSalaFuncion(
-                pelicula,
-                referenciaFuncion
-        );
+        int idFuncion = resolverIdFuncion(pelicula, referenciaFuncion);
+        if (idFuncion <= 0) {
+            return 100;
+        }
 
-        return capacidad > 0 ? capacidad : 100;
+        String sql = "SELECT s.capacidad FROM funciones f "
+                + "INNER JOIN salas s ON f.id_sala = s.id_sala "
+                + "WHERE f.id_funcion = ? LIMIT 1";
+
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idFuncion);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    int capacidad = rs.getInt("capacidad");
+                    return capacidad > 0 ? capacidad : 100;
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al consultar capacidad de la función: " + e.getMessage());
+        }
+
+        return 100;
     }
 
     public static boolean verificarDisponibilidad(
@@ -187,4 +210,94 @@ public class ControlVerificarDisponibilidadCINEX {
 
         return funcion;
     }
+
+    private static ArrayList<String> consultarCodigosOcupados(
+            String pelicula,
+            String referenciaFuncion
+    ) {
+        ArrayList<String> ocupados = new ArrayList<>();
+        int idFuncion = resolverIdFuncion(pelicula, referenciaFuncion);
+
+        if (idFuncion <= 0) {
+            return ocupados;
+        }
+
+        String sql = "SELECT DISTINCT CONCAT(a.fila, a.numero) AS asiento "
+                + "FROM entradas e INNER JOIN asientos a ON e.id_asiento = a.id_asiento "
+                + "WHERE e.id_funcion = ? "
+                + "AND (e.estado IS NULL OR e.estado NOT IN ('Anulada', 'Reembolsada'))";
+
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idFuncion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ocupados.add(rs.getString("asiento"));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al consultar asientos ocupados: " + e.getMessage());
+        }
+
+        return ocupados;
+    }
+
+    private static int resolverIdFuncion(String pelicula, String referenciaFuncion) {
+        int idDirecto = ReferenciaFuncionCINEX.obtenerId(referenciaFuncion);
+        if (idDirecto > 0) {
+            return idDirecto;
+        }
+
+        String titulo = pelicula == null ? "" : pelicula.trim();
+        String visible = ReferenciaFuncionCINEX.mostrar(referenciaFuncion);
+        if (titulo.isEmpty() || visible.isEmpty()) {
+            return -1;
+        }
+
+        String hora24 = normalizarHora(visible);
+        String sql = "SELECT f.id_funcion FROM funciones f "
+                + "INNER JOIN peliculas p ON f.id_pelicula = p.id_pelicula "
+                + "WHERE LOWER(TRIM(p.titulo)) = LOWER(TRIM(?)) "
+                + "AND f.estado = 'Activa' "
+                + "AND f.fecha >= CURDATE() AND f.fecha < DATE_ADD(CURDATE(), INTERVAL 2 DAY) "
+                + "AND (TIME_FORMAT(f.hora, '%H:%i') = ? "
+                + "OR UPPER(TIME_FORMAT(f.hora, '%h:%i %p')) = ? "
+                + "OR UPPER(TIME_FORMAT(f.hora, '%l:%i %p')) = ?) "
+                + "ORDER BY f.fecha, f.hora LIMIT 1";
+
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, titulo);
+            ps.setString(2, hora24);
+            ps.setString(3, visible.toUpperCase());
+            ps.setString(4, visible.toUpperCase());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("id_funcion") : -1;
+            }
+        } catch (SQLException e) {
+            System.out.println("Error al resolver función: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    private static String normalizarHora(String texto) {
+        if (texto == null) {
+            return "";
+        }
+        String hora = texto.trim().toUpperCase()
+                .replace("A. M.", "AM")
+                .replace("P. M.", "PM")
+                .replace("A.M.", "AM")
+                .replace("P.M.", "PM");
+        try {
+            LocalTime valor = LocalTime.parse(
+                    hora,
+                    DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH)
+            );
+            return valor.format(DateTimeFormatter.ofPattern("HH:mm"));
+        } catch (Exception e) {
+            return hora;
+        }
+    }
+
 }

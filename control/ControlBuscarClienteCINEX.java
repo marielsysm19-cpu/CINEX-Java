@@ -12,7 +12,7 @@ public class ControlBuscarClienteCINEX {
     private ControlBuscarClienteCINEX() {
     }
 
-    public static ArrayList<ClienteCINEX> buscarCliente(String tipoBusqueda, String busqueda) throws SQLException {
+    public static ArrayList<ClienteCINEX> buscarCliente(String tipoBusqueda, String busqueda) {
         ArrayList<ClienteCINEX> clientes = new ArrayList<>();
         String dato = busqueda == null ? "" : busqueda.trim();
 
@@ -20,50 +20,43 @@ public class ControlBuscarClienteCINEX {
             return clientes;
         }
 
-        boolean buscarPorDocumento = "Documento".equalsIgnoreCase(tipoBusqueda);
-        String sql;
+        boolean buscarPorDocumento = "Documento".equalsIgnoreCase(tipoBusqueda)
+                || "DNI".equalsIgnoreCase(tipoBusqueda)
+                || "C.E.".equalsIgnoreCase(tipoBusqueda)
+                || "CE".equalsIgnoreCase(tipoBusqueda);
+        boolean buscarPorNombre = "Nombre".equalsIgnoreCase(tipoBusqueda);
 
-        if (buscarPorDocumento) {
-            sql = "SELECT id_cliente, dni, nombre " +
-                    "FROM clientes " +
-                    "WHERE dni = ? " +
-                    "ORDER BY nombre ASC";
-        } else {
-            sql = "SELECT id_cliente, dni, nombre " +
-                    "FROM clientes " +
-                    "WHERE nombre LIKE ? OR dni LIKE ? " +
-                    "ORDER BY nombre ASC";
+        if (!buscarPorDocumento && !buscarPorNombre) {
+            return clientes;
         }
+
+        String sql = buscarPorDocumento
+                ? "SELECT id_cliente, dni, nombre FROM clientes WHERE dni = ? ORDER BY nombre ASC"
+                : "SELECT id_cliente, dni, nombre FROM clientes WHERE nombre LIKE ? ORDER BY nombre ASC";
 
         try (Connection con = BDCINEX.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            if (buscarPorDocumento) {
-                ps.setString(1, dato);
-            } else {
-                ps.setString(1, "%" + dato + "%");
-                ps.setString(2, "%" + dato + "%");
-            }
+            ps.setString(1, buscarPorDocumento ? dato : "%" + dato + "%");
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     clientes.add(mapearCliente(rs));
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("No se pudo buscar el cliente.", e);
         }
 
         return clientes;
     }
 
-    public static ClienteCINEX consultarCliente(String documento) throws SQLException {
+    public static ClienteCINEX consultarCliente(String documento) {
         if (documento == null || documento.trim().isEmpty()) {
             return null;
         }
 
-        String sql = "SELECT id_cliente, dni, nombre " +
-                "FROM clientes " +
-                "WHERE dni = ? " +
-                "LIMIT 1";
+        String sql = "SELECT id_cliente, dni, nombre FROM clientes WHERE dni = ? LIMIT 1";
 
         try (Connection con = BDCINEX.conectar();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -75,6 +68,8 @@ public class ControlBuscarClienteCINEX {
                     return mapearCliente(rs);
                 }
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("No se pudo consultar el cliente.", e);
         }
 
         return null;
@@ -83,7 +78,6 @@ public class ControlBuscarClienteCINEX {
     private static ClienteCINEX mapearCliente(ResultSet rs) throws SQLException {
         ClienteCINEX cliente = new ClienteCINEX();
         cliente.setIdCliente(rs.getInt("id_cliente"));
-        cliente.setDni(rs.getString("dni"));
         cliente.setNumeroDocumento(rs.getString("dni"));
         cliente.setNombre(rs.getString("nombre"));
         return cliente;

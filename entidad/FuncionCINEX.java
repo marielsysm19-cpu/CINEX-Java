@@ -27,6 +27,7 @@ public class FuncionCINEX {
     private int capacidad;
     private int vendidos;
     private int disponibles;
+    private String autorizacionReembolso;
 
     public FuncionCINEX() {
     }
@@ -245,6 +246,14 @@ public class FuncionCINEX {
 
     public void setDisponibles(int disponibles) {
         this.disponibles = Math.max(0, disponibles);
+    }
+
+    public String getAutorizacionReembolso() {
+        return valorSeguro(autorizacionReembolso);
+    }
+
+    public void setAutorizacionReembolso(String autorizacionReembolso) {
+        this.autorizacionReembolso = valorSeguro(autorizacionReembolso);
     }
 
     private void recalcularDisponibles() {

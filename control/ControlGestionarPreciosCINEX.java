@@ -1,5 +1,6 @@
 package control;
 
+import entidad.PrecioCINEX;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,8 +11,8 @@ public class ControlGestionarPreciosCINEX {
 
     private String ultimoError = "";
 
-    public ArrayList<Object[]> listarPrecios() {
-        ArrayList<Object[]> lista = new ArrayList<>();
+    public ArrayList<PrecioCINEX> listarPrecios() {
+        ArrayList<PrecioCINEX> lista = new ArrayList<>();
         ultimoError = "";
 
         String sql = "SELECT id_precio, tipo_entrada, monto "
@@ -24,11 +25,12 @@ public class ControlGestionarPreciosCINEX {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(new Object[]{
+                    lista.add(new PrecioCINEX(
                             rs.getInt("id_precio"),
                             rs.getString("tipo_entrada"),
-                            rs.getDouble("monto")
-                    });
+                            rs.getDouble("monto"),
+                            "Activo"
+                    ));
                 }
             }
 

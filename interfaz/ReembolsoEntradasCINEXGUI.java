@@ -3,6 +3,7 @@ package interfaz;
 import control.ControlNotificacionesCINEX;
 import control.ControlReembolsosCINEX;
 import control.ControlReembolsosCINEX.ResultadoReembolso;
+import entidad.FuncionCINEX;
 import entidad.EntradaReembolsoCINEX;
 
 import javax.swing.*;
@@ -462,7 +463,7 @@ public class ReembolsoEntradasCINEXGUI extends JFrame {
 
     private void cargarFunciones() {
         try {
-            ArrayList<Object[]> datos =
+            ArrayList<FuncionCINEX> datos =
                     control.listarFuncionesConVentas(
                             txtBuscarFuncion == null
                                     ? ""
@@ -471,8 +472,17 @@ public class ReembolsoEntradasCINEXGUI extends JFrame {
 
             modeloFunciones.setRowCount(0);
 
-            for (Object[] fila : datos) {
-                modeloFunciones.addRow(fila);
+            for (FuncionCINEX funcion : datos) {
+                modeloFunciones.addRow(new Object[]{
+                        funcion.getIdFuncion(),
+                        funcion.getPelicula(),
+                        funcion.getFechaTexto(),
+                        funcion.getHoraBD(),
+                        funcion.getSala(),
+                        funcion.getEstado(),
+                        funcion.getVendidos(),
+                        funcion.getAutorizacionReembolso()
+                });
             }
 
             idFuncionSeleccionada = -1;

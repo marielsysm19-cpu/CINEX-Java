@@ -1,5 +1,6 @@
 package control;
 
+import entidad.SalaCINEX;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -8,8 +9,8 @@ import java.util.ArrayList;
 
 public class ControlGestionarSalasCINEX {
 
-    public ArrayList<Object[]> listarSalas() {
-        ArrayList<Object[]> lista = new ArrayList<>();
+    public ArrayList<SalaCINEX> listarSalas() {
+        ArrayList<SalaCINEX> lista = new ArrayList<>();
 
         String sql = "SELECT id_sala, nombre, capacidad, tipo, estado "
                 + "FROM salas ORDER BY id_sala ASC";
@@ -19,13 +20,14 @@ public class ControlGestionarSalasCINEX {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                lista.add(new Object[]{
+                SalaCINEX sala = new SalaCINEX(
                         rs.getInt("id_sala"),
                         rs.getString("nombre"),
-                        rs.getInt("capacidad"),
                         rs.getString("tipo"),
+                        rs.getInt("capacidad"),
                         rs.getString("estado")
-                });
+                );
+                lista.add(sala);
             }
 
         } catch (SQLException e) {

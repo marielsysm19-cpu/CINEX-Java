@@ -3,13 +3,19 @@ package control;
 import entidad.ClienteCINEX;
 import entidad.ComprobanteCINEX;
 import entidad.EntradaCINEX;
+import entidad.FuncionCINEX;
+import entidad.SalaCINEX;
 import entidad.PagoCINEX;
 
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class ControlEmitirComprobanteCINEX {
 
@@ -60,20 +66,18 @@ public class ControlEmitirComprobanteCINEX {
         String numeroVenta = valorSeguro(numeroVentaRegistrada);
 
         if (numeroVenta.isEmpty()) {
-            numeroVenta = invocarStringBDCINEX(
-                    "obtenerUltimoNumeroVentaPorUsuario",
-                    usuario
-            );
+            numeroVenta = obtenerUltimoNumeroVentaPorUsuario(usuario);
         }
 
         if (numeroVenta.isEmpty()) {
             numeroVenta = generarNumeroVentaLocal();
         }
 
-        String sala = invocarStringBDCINEX("obtenerNombreSalaFuncion", pelicula, funcion);
-        if (sala.isEmpty()) {
-            sala = invocarStringBDCINEX("obtenerNombreSalaPorPeliculaYFuncion", pelicula, funcion);
-        }
+        FuncionCINEX funcionEntidad =
+                ControlVerificarDisponibilidadCINEX.consultarFuncionSeleccionada(pelicula, funcion);
+        SalaCINEX salaEntidad =
+                ControlConsultarPlanoAsientosCINEX.obtenerSalaAsociada(funcionEntidad);
+        String sala = salaEntidad == null ? "Sala" : valorSeguro(salaEntidad.getNombre());
         if (sala.isEmpty()) {
             sala = "Sala";
         }
@@ -124,11 +128,11 @@ public class ControlEmitirComprobanteCINEX {
             return entradas;
         }
 
-        String tipoSalaFuncion =
-                BDCINEX.obtenerTipoSalaFuncion(
-                        pelicula,
-                        funcion
-                );
+        FuncionCINEX funcionEntidad =
+                ControlVerificarDisponibilidadCINEX.consultarFuncionSeleccionada(pelicula, funcion);
+        SalaCINEX salaEntidad =
+                ControlConsultarPlanoAsientosCINEX.obtenerSalaAsociada(funcionEntidad);
+        String tipoSalaFuncion = salaEntidad == null ? "" : valorSeguro(salaEntidad.getTipo());
 
         for (int i = 0; i < asientos.size(); i++) {
             String asiento = asientos.get(i);
@@ -205,7 +209,7 @@ public class ControlEmitirComprobanteCINEX {
         boolean registrado = false;
 
         try {
-            registrado = BDCINEX.registrarComprobanteVentaExistente(
+            registrado = registrarComprobanteVentaExistente(
                     comprobante.getNumeroVenta(),
                     rutaQR,
                     comprobante.getMontoPagado()
@@ -225,45 +229,160 @@ public class ControlEmitirComprobanteCINEX {
 
     private static String obtenerTipoEntrada(List<String> tiposEntrada, int indice) {
         if (tiposEntrada == null || indice < 0 || indice >= tiposEntrada.size()) {
-            return BDCINEX.obtenerTipoEntradaPredeterminado();
+            return ControlGestionarPagoCINEX.obtenerTipoEntradaPrincipal();
         }
 
         String tipo = tiposEntrada.get(indice);
-        return valorSeguro(tipo).isEmpty() ? BDCINEX.obtenerTipoEntradaPredeterminado() : tipo.trim();
+        return valorSeguro(tipo).isEmpty() ? ControlGestionarPagoCINEX.obtenerTipoEntradaPrincipal() : tipo.trim();
     }
 
     private static String generarNumeroVentaLocal() {
         return "VTA-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
     }
 
-    private static String invocarStringBDCINEX(String metodo, Object... parametros) {
-        String[] clases = {"control.BDCINEX", "BDCINEX"};
+    private static String obtenerUltimoNumeroVentaPorUsuario(String usuario) {
+        String sql = "SELECT v.numero_venta FROM ventas v "
+                + "INNER JOIN usuarios u ON v.id_usuario = u.id_usuario "
+                + "WHERE u.usuario = ? ORDER BY v.id_venta DESC LIMIT 1";
 
-        for (String nombreClase : clases) {
-            try {
-                Class<?> clase = Class.forName(nombreClase);
-
-                for (Method m : clase.getDeclaredMethods()) {
-                    if (!m.getName().equals(metodo)) {
-                        continue;
-                    }
-
-                    if (m.getParameterCount() != parametros.length) {
-                        continue;
-                    }
-
-                    m.setAccessible(true);
-                    Object respuesta = m.invoke(null, parametros);
-
-                    if (respuesta != null) {
-                        return String.valueOf(respuesta).trim();
-                    }
-                }
-            } catch (Exception ignored) {
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, valorSeguro(usuario));
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? valorSeguro(rs.getString("numero_venta")) : "";
             }
+        } catch (SQLException e) {
+            System.out.println("Error al recuperar última venta: " + e.getMessage());
+            return "";
+        }
+    }
+
+    private static boolean registrarComprobanteVentaExistente(
+            String numeroVenta,
+            String codigoQR,
+            double total
+    ) {
+        if (valorSeguro(numeroVenta).isEmpty()) {
+            return false;
         }
 
-        return "";
+        Connection con = null;
+        try {
+            con = BDCINEX.conectar();
+            con.setAutoCommit(false);
+
+            int idVenta = obtenerIdVentaPorNumero(con, numeroVenta.trim());
+            if (idVenta <= 0) {
+                con.rollback();
+                return false;
+            }
+
+            if (columnaExiste(con, "ventas", "qr_entrada")) {
+                try (PreparedStatement ps = con.prepareStatement(
+                        "UPDATE ventas SET qr_entrada = ? WHERE id_venta = ?")) {
+                    ps.setString(1, valorSeguro(codigoQR));
+                    ps.setInt(2, idVenta);
+                    ps.executeUpdate();
+                }
+            }
+
+            try (PreparedStatement ps = con.prepareStatement(
+                    "DELETE FROM comprobantes WHERE id_venta = ?")) {
+                ps.setInt(1, idVenta);
+                ps.executeUpdate();
+            }
+
+            insertarComprobante(con, idVenta, valorSeguro(codigoQR), total, numeroVenta.trim());
+            con.commit();
+            return true;
+        } catch (Exception e) {
+            try {
+                if (con != null) {
+                    con.rollback();
+                }
+            } catch (SQLException ignored) {
+            }
+            System.out.println("Error al registrar comprobante: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                if (con != null) {
+                    con.setAutoCommit(true);
+                    con.close();
+                }
+            } catch (SQLException ignored) {
+            }
+        }
+    }
+
+    private static int obtenerIdVentaPorNumero(Connection con, String numeroVenta) throws SQLException {
+        try (PreparedStatement ps = con.prepareStatement(
+                "SELECT id_venta FROM ventas WHERE numero_venta = ? LIMIT 1")) {
+            ps.setString(1, numeroVenta);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getInt("id_venta") : -1;
+            }
+        }
+    }
+
+    private static void insertarComprobante(
+            Connection con,
+            int idVenta,
+            String codigoQR,
+            double total,
+            String numeroVenta
+    ) throws SQLException {
+        boolean tieneCodigoQR = columnaExiste(con, "comprobantes", "codigo_qr");
+        boolean tieneTotal = columnaExiste(con, "comprobantes", "total");
+        boolean tieneTipo = columnaExiste(con, "comprobantes", "tipo_comprobante");
+        boolean tieneNumero = columnaExiste(con, "comprobantes", "numero_comprobante");
+        boolean tieneFecha = columnaExiste(con, "comprobantes", "fecha_emision");
+
+        if (tieneCodigoQR && tieneTotal) {
+            try (PreparedStatement ps = con.prepareStatement(
+                    "INSERT INTO comprobantes(id_venta, codigo_qr, total) VALUES (?, ?, ?)")) {
+                ps.setInt(1, idVenta);
+                ps.setString(2, codigoQR);
+                ps.setDouble(3, total);
+                ps.executeUpdate();
+            }
+            return;
+        }
+
+        if (tieneTipo && tieneNumero && tieneFecha) {
+            try (PreparedStatement ps = con.prepareStatement(
+                    "INSERT INTO comprobantes(id_venta, tipo_comprobante, numero_comprobante, fecha_emision) "
+                            + "VALUES (?, 'Boleta', ?, NOW())")) {
+                ps.setInt(1, idVenta);
+                ps.setString(2, numeroVenta);
+                ps.executeUpdate();
+            }
+            return;
+        }
+
+        try (PreparedStatement ps = con.prepareStatement(
+                "INSERT INTO comprobantes(id_venta) VALUES (?)")) {
+            ps.setInt(1, idVenta);
+            ps.executeUpdate();
+        }
+    }
+
+    private static boolean columnaExiste(Connection con, String tabla, String columna) {
+        try {
+            DatabaseMetaData meta = con.getMetaData();
+            String catalogo = con.getCatalog();
+            try (ResultSet rs = meta.getColumns(catalogo, null, tabla, columna)) {
+                if (rs.next()) return true;
+            }
+            try (ResultSet rs = meta.getColumns(catalogo, null, tabla.toLowerCase(), columna)) {
+                if (rs.next()) return true;
+            }
+            try (ResultSet rs = meta.getColumns(catalogo, null, tabla.toUpperCase(), columna)) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            return false;
+        }
     }
 
     private static String valorSeguro(String texto) {

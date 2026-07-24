@@ -9,6 +9,30 @@ import java.sql.Statement;
 
 public class ControlIniciarSesionCINEX {
 
+    /**
+     * Verifica la disponibilidad del origen de datos sin exponer BDCINEX a la interfaz.
+     */
+    public boolean sistemaDisponible() {
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement("SELECT 1");
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next();
+        } catch (SQLException e) {
+            System.out.println("[LOGIN CINEX] Base de datos no disponible: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Autentica a partir de la entidad UsuarioCINEX.
+     */
+    public UsuarioCINEX iniciarSesion(UsuarioCINEX credenciales) {
+        if (credenciales == null) {
+            return null;
+        }
+        return iniciarSesion(credenciales.getUsuario(), credenciales.getContrasena());
+    }
+
     public UsuarioCINEX iniciarSesion(String usuario, String contrasena) {
         if (textoVacio(usuario) || textoVacio(contrasena)) {
             return null;

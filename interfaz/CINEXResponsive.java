@@ -9,7 +9,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Enumeration;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import control.BDCINEX;
 
 
 public final class CINEXResponsive {

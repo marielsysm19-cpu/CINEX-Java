@@ -8,6 +8,8 @@ import java.sql.Statement;
 
 public class ControlValidarClienteCINEX {
 
+    private static ClienteCINEX clienteVentaActual;
+
     public static String validarInformacion(String tipoDocumento, String numeroDocumento, String nombre) {
         String validacionDocumento = validarDatosParaConsulta(tipoDocumento, numeroDocumento);
         if (!validacionDocumento.isEmpty()) {
@@ -47,6 +49,47 @@ public class ControlValidarClienteCINEX {
         }
 
         return "";
+    }
+
+    /**
+     * Busca un cliente utilizando la entidad de dominio y mantiene la BD encapsulada en control.
+     */
+    public static ClienteCINEX buscarClientePorDocumento(String tipoDocumento, String numeroDocumento) throws Exception {
+        String validacion = validarDatosParaConsulta(tipoDocumento, numeroDocumento);
+        if (!validacion.isEmpty()) {
+            return null;
+        }
+        ClienteCINEX cliente = verificarCliente(numeroDocumento);
+        if (cliente != null) {
+            cliente.setTipoDocumento(normalizarTipoDocumento(tipoDocumento));
+        }
+        return cliente;
+    }
+
+    /**
+     * Conserva la entidad cliente para la venta actual dentro del control.
+     * BDCINEX no mantiene estado de negocio.
+     */
+    public static void prepararClienteParaVenta(ClienteCINEX cliente) {
+        if (cliente == null) {
+            clienteVentaActual = null;
+            return;
+        }
+
+        ClienteCINEX copia = new ClienteCINEX();
+        copia.setIdCliente(cliente.getIdCliente());
+        copia.setTipoDocumento(cliente.getTipoDocumento());
+        copia.setNumeroDocumento(cliente.getNumeroDocumento());
+        copia.setNombre(cliente.getNombre());
+        clienteVentaActual = copia;
+    }
+
+    public static ClienteCINEX obtenerClientePreparadoParaVenta() {
+        return clienteVentaActual;
+    }
+
+    public static void limpiarClientePreparadoParaVenta() {
+        clienteVentaActual = null;
     }
 
     public static ClienteCINEX verificarCliente(String numeroDocumento) throws Exception {

@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
 import javax.imageio.ImageIO;
-import control.BDCINEX;
 
 
 public class GeneradorQR {

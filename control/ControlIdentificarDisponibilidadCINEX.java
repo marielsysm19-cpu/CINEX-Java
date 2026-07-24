@@ -3,6 +3,10 @@ package control;
 import entidad.AsientoCINEX;
 import entidad.FuncionCINEX;
 import entidad.SalaCINEX;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -75,21 +79,25 @@ public class ControlIdentificarDisponibilidadCINEX {
             return ocupados;
         }
 
-        ArrayList<String> datos =
-                BDCINEX.listarAsientosOcupados(
-                        funcion.getIdFuncion()
-                );
+        String sql = "SELECT DISTINCT CONCAT(a.fila, a.numero) AS asiento "
+                + "FROM entradas e INNER JOIN asientos a ON e.id_asiento = a.id_asiento "
+                + "WHERE e.id_funcion = ? "
+                + "AND (e.estado IS NULL OR e.estado NOT IN ('Anulada', 'Reembolsada'))";
 
-        if (datos == null) {
-            return ocupados;
-        }
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, funcion.getIdFuncion());
 
-        for (String asiento : datos) {
-            if (asiento != null && !asiento.trim().isEmpty()) {
-                ocupados.add(
-                        asiento.trim().toUpperCase()
-                );
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String asiento = rs.getString("asiento");
+                    if (asiento != null && !asiento.trim().isEmpty()) {
+                        ocupados.add(asiento.trim().toUpperCase());
+                    }
+                }
             }
+        } catch (SQLException e) {
+            System.out.println("Error al consultar asientos ocupados: " + e.getMessage());
         }
 
         return ocupados;

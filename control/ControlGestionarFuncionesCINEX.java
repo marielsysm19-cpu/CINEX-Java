@@ -1,5 +1,6 @@
 package control;
 
+import entidad.FuncionCINEX;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -13,19 +14,15 @@ import java.util.ArrayList;
 
 public class ControlGestionarFuncionesCINEX {
 
-    public ArrayList<Object[]> listarFunciones() {
-        ArrayList<Object[]> lista = new ArrayList<>();
+    public ArrayList<FuncionCINEX> listarFunciones() {
+        ArrayList<FuncionCINEX> lista = new ArrayList<>();
 
-        String sql = "SELECT f.id_funcion, p.titulo, "
+        String sql = "SELECT f.id_funcion, f.id_pelicula, f.id_sala, p.titulo, "
                 + "s.nombre AS sala, s.tipo AS tipo_sala, "
-                + "DATE_FORMAT(f.fecha, '%d/%m/%Y') AS fecha, "
-                + "TIME_FORMAT(f.hora, '%H:%i') AS hora, "
-                + "f.estado, p.duracion "
+                + "f.fecha, f.hora, f.estado, p.duracion "
                 + "FROM funciones f "
-                + "INNER JOIN peliculas p "
-                + "ON f.id_pelicula = p.id_pelicula "
-                + "INNER JOIN salas s "
-                + "ON f.id_sala = s.id_sala "
+                + "INNER JOIN peliculas p ON f.id_pelicula = p.id_pelicula "
+                + "INNER JOIN salas s ON f.id_sala = s.id_sala "
                 + "ORDER BY f.fecha DESC, f.hora DESC";
 
         try (Connection con = BDCINEX.conectar();
@@ -33,39 +30,28 @@ public class ControlGestionarFuncionesCINEX {
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                String nombreSala = rs.getString("sala");
-                String tipoSala = rs.getString("tipo_sala");
-
-                String salaCompleta = nombreSala == null
-                        ? "Sala"
-                        : nombreSala.trim();
-
-                if (tipoSala != null && !tipoSala.trim().isEmpty()) {
-                    salaCompleta += " - " + tipoSala.trim();
-                }
-
-                lista.add(new Object[]{
-                        rs.getInt("id_funcion"),
-                        rs.getString("titulo"),
-                        salaCompleta,
-                        rs.getString("fecha"),
-                        rs.getString("hora"),
-                        rs.getString("estado"),
-                        rs.getInt("duracion")
-                });
+                FuncionCINEX funcion = new FuncionCINEX();
+                funcion.setIdFuncion(rs.getInt("id_funcion"));
+                funcion.setIdPelicula(rs.getInt("id_pelicula"));
+                funcion.setIdSala(rs.getInt("id_sala"));
+                funcion.setPelicula(rs.getString("titulo"));
+                funcion.setSala(rs.getString("sala"));
+                funcion.setTipoSala(rs.getString("tipo_sala"));
+                funcion.setFecha(rs.getDate("fecha") == null ? null : rs.getDate("fecha").toLocalDate());
+                funcion.setHora(rs.getTime("hora") == null ? null : rs.getTime("hora").toLocalTime());
+                funcion.setEstado(rs.getString("estado"));
+                funcion.setDuracionMinutos(rs.getInt("duracion"));
+                lista.add(funcion);
             }
 
         } catch (SQLException e) {
-            System.out.println(
-                    "[ControlGestionarFuncionesCINEX] Error al listar funciones: "
-                            + e.getMessage()
-            );
+            System.out.println("[ControlGestionarFuncionesCINEX] Error al listar funciones: " + e.getMessage());
         }
 
         return lista;
     }
 
-    public DatosFuncion obtenerFuncion(int idFuncion) {
+    public FuncionCINEX obtenerFuncion(int idFuncion) {
         String sql = "SELECT f.id_funcion, f.id_pelicula, f.id_sala, "
                 + "f.fecha, f.hora, f.estado, p.titulo, "
                 + "s.nombre, s.tipo "
@@ -84,22 +70,17 @@ public class ControlGestionarFuncionesCINEX {
                     return null;
                 }
 
-                String sala = rs.getString("nombre");
-                String tipo = rs.getString("tipo");
-                if (tipo != null && !tipo.trim().isEmpty()) {
-                    sala += " - " + tipo.trim();
-                }
-
-                return new DatosFuncion(
-                        rs.getInt("id_funcion"),
-                        rs.getInt("id_pelicula"),
-                        rs.getInt("id_sala"),
-                        rs.getDate("fecha").toLocalDate(),
-                        rs.getTime("hora").toLocalTime(),
-                        rs.getString("estado"),
-                        rs.getString("titulo"),
-                        sala
-                );
+                FuncionCINEX funcion = new FuncionCINEX();
+                funcion.setIdFuncion(rs.getInt("id_funcion"));
+                funcion.setIdPelicula(rs.getInt("id_pelicula"));
+                funcion.setIdSala(rs.getInt("id_sala"));
+                funcion.setFecha(rs.getDate("fecha") == null ? null : rs.getDate("fecha").toLocalDate());
+                funcion.setHora(rs.getTime("hora") == null ? null : rs.getTime("hora").toLocalTime());
+                funcion.setEstado(rs.getString("estado"));
+                funcion.setPelicula(rs.getString("titulo"));
+                funcion.setSala(rs.getString("nombre"));
+                funcion.setTipoSala(rs.getString("tipo"));
+                return funcion;
             }
 
         } catch (SQLException e) {
@@ -278,46 +259,6 @@ public class ControlGestionarFuncionesCINEX {
 
     public boolean hayFuncionSeleccionada(int filaSeleccionada) {
         return filaSeleccionada >= 0;
-    }
-
-    public static class DatosFuncion {
-        private final int idFuncion;
-        private final int idPelicula;
-        private final int idSala;
-        private final LocalDate fecha;
-        private final LocalTime hora;
-        private final String estado;
-        private final String pelicula;
-        private final String sala;
-
-        public DatosFuncion(
-                int idFuncion,
-                int idPelicula,
-                int idSala,
-                LocalDate fecha,
-                LocalTime hora,
-                String estado,
-                String pelicula,
-                String sala
-        ) {
-            this.idFuncion = idFuncion;
-            this.idPelicula = idPelicula;
-            this.idSala = idSala;
-            this.fecha = fecha;
-            this.hora = hora;
-            this.estado = estado == null ? "" : estado;
-            this.pelicula = pelicula == null ? "" : pelicula;
-            this.sala = sala == null ? "" : sala;
-        }
-
-        public int getIdFuncion() { return idFuncion; }
-        public int getIdPelicula() { return idPelicula; }
-        public int getIdSala() { return idSala; }
-        public LocalDate getFecha() { return fecha; }
-        public LocalTime getHora() { return hora; }
-        public String getEstado() { return estado; }
-        public String getPelicula() { return pelicula; }
-        public String getSala() { return sala; }
     }
 
     public static class ResultadoModificacion {

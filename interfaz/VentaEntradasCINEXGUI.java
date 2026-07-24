@@ -147,39 +147,6 @@ public class VentaEntradasCINEXGUI extends JFrame {
         return contenido;
     }
 
-    private JPanel crearSidebar() {
-        JPanel wrapper = new JPanel(new BorderLayout());
-        wrapper.setOpaque(false);
-        wrapper.setPreferredSize(new Dimension(265, 0));
-        wrapper.setBorder(new EmptyBorder(20, 20, 20, 15));
-
-        RoundedPanel sidebar = new RoundedPanel(18, new Color(5, 18, 43, 170));
-        sidebar.setLayout(null);
-        sidebar.setBorder(new LineBorder(new Color(42, 70, 110), 1, true));
-
-        String[] pasos = {
-                "Películas",
-                "Funciones",
-                "Asientos",
-                "Clientes",
-                "Pago",
-                "Comprobante"
-        };
-
-        int y = 30;
-
-        for (int i = 0; i < pasos.length; i++) {
-            StepItem item = new StepItem(pasos[i], i == 0);
-            item.setBounds(18, y, 210, 54);
-            sidebar.add(item);
-            y += 66;
-        }
-
-        wrapper.add(sidebar, BorderLayout.CENTER);
-
-        return wrapper;
-    }
-
     private JPanel crearPanelConsultaPeliculas() {
         RoundedPanel panel = new RoundedPanel(18, new Color(4, 18, 45, 225));
         panel.setLayout(null);

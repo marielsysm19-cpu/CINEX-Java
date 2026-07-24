@@ -6,10 +6,10 @@ import control.ControlFiltrarReporteCINEX;
 import control.ControlGenerarIndicadoresCINEX;
 import control.ControlOrdenarPeliculasCINEX;
 import control.ControlProcesarConsultaCINEX;
-import control.BDCINEX;
 import entidad.PeliculaCINEX;
 import entidad.ReporteCINEX;
 import entidad.VentaCINEX;
+import entidad.SalaCINEX;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -33,10 +33,6 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
@@ -986,26 +982,14 @@ public class ReportesGerenteCINEXGUI extends JFrame {
     }
 
     private boolean existenVentasRegistradas() {
-        String sql = "SELECT 1 FROM ventas LIMIT 1";
-        try (Connection con = BDCINEX.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            return rs.next();
-        } catch (SQLException e) {
-            throw new RuntimeException("No se pudo validar la precondición de ventas registradas.", e);
-        }
+        return controlFiltrarReporte.existenVentasRegistradas();
     }
 
     private void cargarSalas() {
         cbSala.removeAllItems();
         cbSala.addItem("Todas");
-        String sql = "SELECT nombre FROM salas ORDER BY nombre";
-        try (Connection con = BDCINEX.conectar();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) cbSala.addItem(rs.getString("nombre"));
-        } catch (SQLException e) {
-            // Mantiene Todas.
+        for (SalaCINEX sala : controlFiltrarReporte.listarSalas()) {
+            cbSala.addItem(sala.getNombre());
         }
     }
 

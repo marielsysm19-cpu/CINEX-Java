@@ -23,6 +23,7 @@ public class LoginCINEXGUI extends JFrame {
     private final Color TEXTO_PLACEHOLDER = new Color(135, 142, 160);
 
     private JPanel panelDerechoWrapper;
+    private final ControlIniciarSesionCINEX controlLogin = new ControlIniciarSesionCINEX();
 
     public LoginCINEXGUI() {
         CINEXResponsive.iniciar();
@@ -66,7 +67,7 @@ public class LoginCINEXGUI extends JFrame {
         JLabel lblLogo = new JLabel(loadScaledIcon("imagenes/logocinex.png", 315, 115));
         lblLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel lblTitulo = new JLabel("Login");
+        JLabel lblTitulo = new JLabel("Iniciar sesión");
         lblTitulo.setForeground(Color.WHITE);
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 30));
         lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -184,10 +185,30 @@ public class LoginCINEXGUI extends JFrame {
             return;
         }
 
-        ControlIniciarSesionCINEX controlLogin =
-                new ControlIniciarSesionCINEX();
+        // Esta validación ocurre antes de autenticar al usuario.
+        // Si la simulación está activa o la conexión real falla, el flujo
+        // termina aquí y no se abre ningún menú del sistema.
+        boolean baseDatosDisponible = controlLogin.sistemaDisponible();
+
+        if (!baseDatosDisponible) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    "No se pudo establecer conexión con la base de datos CINEX.\n"
+                            + "Verifique la conexión e inténtelo nuevamente.",
+                    "Base de datos no disponible",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            txtPassword.setText("");
+            txtUsuario.requestFocusInWindow();
+            return;
+        }
+
+        UsuarioCINEX credenciales = new UsuarioCINEX();
+        credenciales.setUsuario(usuario);
+        credenciales.setContrasena(contrasena);
+
         UsuarioCINEX usuarioAutenticado =
-                controlLogin.iniciarSesion(usuario, contrasena);
+                controlLogin.iniciarSesion(credenciales);
 
         if (usuarioAutenticado == null) {
             JOptionPane.showMessageDialog(

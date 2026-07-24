@@ -19,86 +19,90 @@ public class ControlConsultarFuncionesCINEX {
             return funciones;
         }
 
-        ArrayList<Object[]> datos =
-                BDCINEX.listarFuncionesPorPelicula(
-                        pelicula.getTitulo().trim()
-                );
+        String sql = "SELECT f.id_funcion, p.titulo, p.genero, p.duracion, p.clasificacion, p.imagen, "
+                + "s.id_sala, s.nombre AS sala, s.capacidad, s.tipo, f.fecha, f.hora, f.estado, "
+                + "IFNULL(vendidos.total, 0) AS vendidos "
+                + "FROM funciones f "
+                + "INNER JOIN peliculas p ON f.id_pelicula = p.id_pelicula "
+                + "INNER JOIN salas s ON f.id_sala = s.id_sala "
+                + "LEFT JOIN (SELECT id_funcion, COUNT(*) AS total FROM entradas "
+                + "WHERE estado IS NULL OR estado NOT IN ('Anulada', 'Reembolsada') GROUP BY id_funcion) vendidos "
+                + "ON vendidos.id_funcion = f.id_funcion "
+                + "WHERE LOWER(TRIM(p.titulo)) = LOWER(TRIM(?)) "
+                + "AND f.estado = 'Activa' "
+                + "AND f.fecha >= CURDATE() "
+                + "AND f.fecha < DATE_ADD(CURDATE(), INTERVAL 2 DAY) "
+                + "AND (f.fecha > CURDATE() OR TIMESTAMP(f.fecha, f.hora) >= DATE_SUB(NOW(), INTERVAL 10 MINUTE)) "
+                + "ORDER BY f.fecha ASC, f.hora ASC";
 
-        if (datos == null) {
-            return funciones;
-        }
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
 
-        for (Object[] fila : datos) {
-            FuncionCINEX funcion =
-                    convertirFuncionDesdeFila(fila, pelicula);
+            ps.setString(1, pelicula.getTitulo().trim());
 
-            if (funcion != null) {
-                funciones.add(funcion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    FuncionCINEX funcion = mapearFuncion(rs);
+                    funcion.setPeliculaEntidad(pelicula);
+                    funcion.setIdSala(rs.getInt("id_sala"));
+                    funciones.add(funcion);
+                }
             }
+        } catch (SQLException e) {
+            System.out.println("Error al listar funciones de la película: " + e.getMessage());
         }
 
         return funciones;
     }
 
-    public ArrayList<Object[]> verificarFunciones(
+    public ArrayList<FuncionCINEX> verificarFunciones(
             String tituloPelicula
     ) {
         String titulo = limpiarTitulo(tituloPelicula);
-
         if (titulo.isEmpty()) {
             return new ArrayList<>();
         }
 
-        ArrayList<Object[]> funciones =
-                BDCINEX.listarFuncionesPorPelicula(titulo);
+        PeliculaCINEX pelicula = obtenerPeliculaPorTitulo(titulo);
+        if (pelicula == null) {
+            pelicula = new PeliculaCINEX();
+            pelicula.setTitulo(titulo);
+        }
 
-        return funciones == null
-                ? new ArrayList<>()
-                : funciones;
+        return consultarFuncionesPorPelicula(pelicula);
     }
 
     public PeliculaCINEX obtenerPeliculaPorTitulo(
             String tituloPelicula
     ) {
         String titulo = limpiarTitulo(tituloPelicula);
-
         if (titulo.isEmpty()) {
             return null;
         }
 
-        ArrayList<Object[]> peliculas =
-                BDCINEX.listarPeliculas();
+        String sql = "SELECT id_pelicula, titulo, genero, duracion, clasificacion, imagen, estado, en_cartelera "
+                + "FROM peliculas WHERE LOWER(TRIM(titulo)) = LOWER(TRIM(?)) LIMIT 1";
 
-        if (peliculas == null) {
-            return null;
-        }
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, titulo);
 
-        for (Object[] fila : peliculas) {
-            String tituloRegistrado =
-                    obtenerTextoSeguro(fila, 1, "");
-
-            if (tituloRegistrado.equalsIgnoreCase(titulo)) {
-                PeliculaCINEX pelicula = new PeliculaCINEX();
-
-                pelicula.setIdPelicula(
-                        obtenerEnteroSeguro(fila, 0, 0)
-                );
-                pelicula.setTitulo(tituloRegistrado);
-                pelicula.setGenero(
-                        obtenerTextoSeguro(fila, 2, "")
-                );
-                pelicula.setDuracion(
-                        obtenerEnteroSeguro(fila, 3, 0)
-                );
-                pelicula.setClasificacion(
-                        obtenerTextoSeguro(fila, 4, "")
-                );
-                pelicula.setImagen(
-                        obtenerTextoSeguro(fila, 5, "")
-                );
-
-                return pelicula;
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    PeliculaCINEX pelicula = new PeliculaCINEX();
+                    pelicula.setIdPelicula(rs.getInt("id_pelicula"));
+                    pelicula.setTitulo(rs.getString("titulo"));
+                    pelicula.setGenero(rs.getString("genero"));
+                    pelicula.setDuracion(rs.getInt("duracion"));
+                    pelicula.setClasificacion(rs.getString("clasificacion"));
+                    pelicula.setImagen(rs.getString("imagen"));
+                    pelicula.setEstado(rs.getString("estado"));
+                    pelicula.setEnCartelera(rs.getInt("en_cartelera"));
+                    return pelicula;
+                }
             }
+        } catch (SQLException e) {
+            System.out.println("Error al consultar película: " + e.getMessage());
         }
 
         return null;

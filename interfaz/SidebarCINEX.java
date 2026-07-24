@@ -1,7 +1,6 @@
 package interfaz;
 import javax.swing.*;
 import java.awt.*;
-import control.BDCINEX;
 
 
 public class SidebarCINEX extends JPanel {

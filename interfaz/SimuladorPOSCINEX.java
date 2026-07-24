@@ -2,7 +2,6 @@ package interfaz;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import control.BDCINEX;
 
 
 public class SimuladorPOSCINEX extends JDialog {

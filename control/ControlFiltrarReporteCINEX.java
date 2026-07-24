@@ -1,6 +1,7 @@
 package control;
 
 import entidad.VentaCINEX;
+import entidad.SalaCINEX;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -12,6 +13,37 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 
 public class ControlFiltrarReporteCINEX {
+
+    public boolean existenVentasRegistradas() {
+        String sql = "SELECT 1 FROM ventas LIMIT 1";
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next();
+        } catch (SQLException e) {
+            throw new RuntimeException("No se pudo validar la precondición de ventas registradas.", e);
+        }
+    }
+
+    public ArrayList<SalaCINEX> listarSalas() {
+        ArrayList<SalaCINEX> salas = new ArrayList<>();
+        String sql = "SELECT id_sala, nombre, capacidad, tipo FROM salas ORDER BY nombre";
+        try (Connection con = BDCINEX.conectar();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                salas.add(new SalaCINEX(
+                        rs.getInt("id_sala"),
+                        rs.getString("nombre"),
+                        rs.getString("tipo"),
+                        rs.getInt("capacidad")
+                ));
+            }
+        } catch (SQLException e) {
+            System.out.println("[ControlFiltrarReporteCINEX] No se pudieron listar salas: " + e.getMessage());
+        }
+        return salas;
+    }
 
     public ArrayList<VentaCINEX> solicitarFiltros(
             LocalDate fechaInicio,

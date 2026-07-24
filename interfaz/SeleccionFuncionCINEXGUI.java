@@ -14,6 +14,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import control.ControlConsultarFuncionesCINEX;
 import entidad.PeliculaCINEX;
+import entidad.FuncionCINEX;
 import entidad.ReferenciaFuncionCINEX;
 
 public class SeleccionFuncionCINEXGUI extends JFrame {
@@ -34,7 +35,7 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
     private FuncionCard funcionActiva;
     private JPanel listaFuncionesPanel;
     private DatosPelicula datos;
-    private final ArrayList<Object[]> funcionesBD = new ArrayList<>();
+    private final ArrayList<FuncionCINEX> funcionesBD = new ArrayList<>();
     private final ControlConsultarFuncionesCINEX controlFunciones =
             new ControlConsultarFuncionesCINEX();
 
@@ -75,15 +76,15 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
         );
 
         if (!funcionesBD.isEmpty()) {
-            Object[] funcion = funcionesBD.get(0);
+            FuncionCINEX funcion = funcionesBD.get(0);
 
             datos = new DatosPelicula(
-                    String.valueOf(funcion[1]),
-                    String.valueOf(funcion[5]),
-                    String.valueOf(funcion[8]),
-                    String.valueOf(funcion[3]) + " min",
-                    String.valueOf(funcion[4]),
-                    String.valueOf(funcion[2])
+                    funcion.getPelicula(),
+                    funcion.getImagen(),
+                    funcion.getTipoSala(),
+                    funcion.getDuracionMinutos() + " min",
+                    funcion.getClasificacion(),
+                    funcion.getGenero()
             );
 
             return;
@@ -161,7 +162,7 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
         } else {
             String ultimoGrupo = "";
 
-            for (Object[] funcion : funcionesBD) {
+            for (FuncionCINEX funcion : funcionesBD) {
                 String grupo = obtenerGrupoFecha(funcion);
 
                 if (!grupo.equals(ultimoGrupo)) {
@@ -199,40 +200,25 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
         panel.add(Box.createVerticalStrut(35)); panel.add(titulo); panel.add(Box.createVerticalStrut(5)); panel.add(subtitulo); panel.add(Box.createVerticalStrut(8)); panel.add(separador); panel.add(Box.createVerticalStrut(30)); panel.add(scroll); return panel;
     }
 
-    private String obtenerGrupoFecha(Object[] funcion) {
-        if (funcion == null
-                || funcion.length <= 9
-                || funcion[9] == null) {
+    private String obtenerGrupoFecha(FuncionCINEX funcion) {
+        if (funcion == null) {
             return "FUNCIONES";
         }
 
-        String fechaTexto = String.valueOf(funcion[9]).trim();
-
-        try {
-            LocalDate fecha = LocalDate.parse(
-                    fechaTexto,
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy")
-            );
-
-            LocalDate hoy = LocalDate.now();
-
-            if (fecha.equals(hoy)) {
-                return "HOY";
+        LocalDate fecha = funcion.getFecha();
+        if (fecha == null) {
+            String fechaTexto = funcion.getFechaTexto();
+            try {
+                fecha = LocalDate.parse(fechaTexto, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            } catch (Exception e) {
+                return fechaTexto == null || fechaTexto.trim().isEmpty() ? "FUNCIONES" : fechaTexto;
             }
-
-            if (fecha.equals(hoy.plusDays(1))) {
-                return "MAÑANA";
-            }
-
-            return fecha.format(
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy")
-            );
-
-        } catch (Exception e) {
-            return fechaTexto.isEmpty()
-                    ? "FUNCIONES"
-                    : fechaTexto;
         }
+
+        LocalDate hoy = LocalDate.now();
+        if (fecha.equals(hoy)) return "HOY";
+        if (fecha.equals(hoy.plusDays(1))) return "MAÑANA";
+        return fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
     }
 
     private JPanel crearSeparadorDia(String texto) {
@@ -449,28 +435,59 @@ public class SeleccionFuncionCINEXGUI extends JFrame {
     private void dibujarImagenCover(Graphics2D g2, BufferedImage original, int x, int y, int ancho, int alto, int radio) { if (original == null) { g2.setColor(new Color(15, 30, 60)); g2.fillRoundRect(x, y, ancho, alto, radio, radio); return; } double escala = Math.max((double) ancho / original.getWidth(), (double) alto / original.getHeight()); int nuevoAncho = (int) Math.round(original.getWidth() * escala); int nuevoAlto = (int) Math.round(original.getHeight() * escala); int posX = x - (nuevoAncho - ancho) / 2; int posY = y - (nuevoAlto - alto) / 2; Shape clipAnterior = g2.getClip(); RoundRectangle2D clip = new RoundRectangle2D.Double(x, y, ancho, alto, radio, radio); g2.setClip(clip); g2.drawImage(original, posX, posY, nuevoAncho, nuevoAlto, null); g2.setClip(clipAnterior); }
 
     class FuncionCard extends JPanel {
-        private final Object[] funcion; private boolean seleccionado = false; private boolean hover = false;
-        public FuncionCard(Object[] funcion) { this.funcion = funcion; setOpaque(false); setPreferredSize(new Dimension(600, 82)); setCursor(new Cursor(Cursor.HAND_CURSOR)); addMouseListener(new MouseAdapter() { @Override
-            public void mouseClicked(MouseEvent e) {
-                int idFuncion = 0;
+        private final FuncionCINEX funcion;
+        private boolean seleccionado = false;
+        private boolean hover = false;
 
-                try {
-                    idFuncion = Integer.parseInt(
-                            String.valueOf(funcion[0])
+        public FuncionCard(FuncionCINEX funcion) {
+            this.funcion = funcion;
+            setOpaque(false);
+            setPreferredSize(new Dimension(600, 82));
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    seleccionarFuncion(
+                            FuncionCard.this,
+                            funcion.getIdFuncion(),
+                            funcion.getHoraBD(),
+                            funcion.getTipoSala()
                     );
-                } catch (Exception ignored) {
-                    idFuncion = 0;
                 }
 
-                seleccionarFuncion(
-                        FuncionCard.this,
-                        idFuncion,
-                        String.valueOf(funcion[10]),
-                        String.valueOf(funcion[8])
-                );
-            } @Override public void mouseEntered(MouseEvent e) { hover = true; repaint(); } @Override public void mouseExited(MouseEvent e) { hover = false; repaint(); } }); }
-        public void setSeleccionado(boolean seleccionado) { this.seleccionado = seleccionado; repaint(); }
-        @Override protected void paintComponent(Graphics g) { super.paintComponent(g); Graphics2D g2 = (Graphics2D) g.create(); g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); Color fondo = seleccionado ? AMARILLO : hover ? new Color(35, 60, 100) : AZUL_CARD; Color texto = seleccionado ? Color.BLACK : BLANCO; Color textoSec = seleccionado ? new Color(20, 20, 20) : GRIS; g2.setColor(fondo); g2.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 15, 15); g2.setColor(new Color(80, 105, 145)); g2.drawRoundRect(0, 0, getWidth() - 3, getHeight() - 3, 15, 15); g2.setColor(texto); g2.setFont(new Font("Arial", Font.BOLD, 20)); g2.drawString(String.valueOf(funcion[10]), 25, 35); g2.setFont(new Font("Arial", Font.BOLD, 15)); g2.drawString(String.valueOf(funcion[6]) + " | " + String.valueOf(funcion[8]), 160, 32); g2.setColor(textoSec); g2.setFont(new Font("Arial", Font.PLAIN, 14)); g2.drawString("Fecha: " + String.valueOf(funcion[9]), 160, 58); g2.drawString("Disponibles: " + String.valueOf(funcion[11]) + " / " + String.valueOf(funcion[7]), 360, 58); g2.dispose(); }
+                @Override public void mouseEntered(MouseEvent e) { hover = true; repaint(); }
+                @Override public void mouseExited(MouseEvent e) { hover = false; repaint(); }
+            });
+        }
+
+        public void setSeleccionado(boolean seleccionado) {
+            this.seleccionado = seleccionado;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Color fondo = seleccionado ? AMARILLO : hover ? new Color(35, 60, 100) : AZUL_CARD;
+            Color texto = seleccionado ? Color.BLACK : BLANCO;
+            Color textoSec = seleccionado ? new Color(20, 20, 20) : GRIS;
+            g2.setColor(fondo);
+            g2.fillRoundRect(0, 0, getWidth() - 2, getHeight() - 2, 15, 15);
+            g2.setColor(new Color(80, 105, 145));
+            g2.drawRoundRect(0, 0, getWidth() - 3, getHeight() - 3, 15, 15);
+            g2.setColor(texto);
+            g2.setFont(new Font("Arial", Font.BOLD, 20));
+            g2.drawString(funcion.getHoraBD(), 25, 35);
+            g2.setFont(new Font("Arial", Font.BOLD, 15));
+            g2.drawString(funcion.getSala() + " | " + funcion.getTipoSala(), 160, 32);
+            g2.setColor(textoSec);
+            g2.setFont(new Font("Arial", Font.PLAIN, 14));
+            g2.drawString("Fecha: " + funcion.getFechaTexto(), 160, 58);
+            g2.drawString("Disponibles: " + funcion.getDisponibles() + " / " + funcion.getCapacidad(), 360, 58);
+            g2.dispose();
+        }
     }
     class PosterPanel extends JPanel { private final BufferedImage poster; public PosterPanel(String imagen) { this.poster = cargarBufferedImage(imagen); setOpaque(false); } @Override protected void paintComponent(Graphics g) { super.paintComponent(g); Graphics2D g2 = (Graphics2D) g.create(); dibujarImagenCover(g2, poster, 0, 0, getWidth(), getHeight(), 8); g2.dispose(); } }
     class RoundedPanel extends JPanel { private final int radio; private final Color color; public RoundedPanel(int radio, Color color) { this.radio = radio; this.color = color; setOpaque(false); } @Override protected void paintComponent(Graphics g) { super.paintComponent(g); Graphics2D g2 = (Graphics2D) g.create(); g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON); g2.setColor(color); g2.fill(new RoundRectangle2D.Double(0, 0, getWidth() - 1, getHeight() - 1, radio, radio)); g2.dispose(); } }

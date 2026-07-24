@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import control.ControlVerificarDisponibilidadCINEX;
 import control.ControlGestionarPagoCINEX;
-import control.BDCINEX;
 import entidad.PrecioCINEX;
 import entidad.ReferenciaFuncionCINEX;
 
@@ -123,42 +122,6 @@ public class SeleccionAsientosCINEXGUI extends JFrame {
         if (preciosEntrada.isEmpty()) {
             preciosEntrada.add(new PrecioCINEX(0, "Entrada General", 32.00, "Activo"));
         }
-    }
-
-    private void refrescarMapaDesdeBD() {
-        cargarAsientosOcupados();
-        aplicarEstadoAsientosAlMapa();
-    }
-
-    private void refrescarMapaDesdeBDAsync() {
-        if (btnConfirmar != null) {
-            btnConfirmar.setEnabled(false);
-        }
-
-        SwingWorker<Set<String>, Void> worker = new SwingWorker<Set<String>, Void>() {
-            @Override
-            protected Set<String> doInBackground() {
-                return new LinkedHashSet<>(ControlVerificarDisponibilidadCINEX.consultarAsientosOcupados(peliculaSeleccionada, funcionSeleccionada));
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    asientosOcupados.clear();
-                    asientosOcupados.addAll(get());
-                    aplicarEstadoAsientosAlMapa();
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(
-                            SeleccionAsientosCINEXGUI.this,
-                            "No se pudo actualizar el mapa de asientos.",
-                            "Error de actualización",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-                }
-            }
-        };
-
-        worker.execute();
     }
 
     private void aplicarEstadoAsientosAlMapa() {
@@ -319,36 +282,6 @@ public class SeleccionAsientosCINEXGUI extends JFrame {
         contenido.add(crearFooter(), BorderLayout.SOUTH);
 
         return contenido;
-    }
-
-    private JPanel crearSidebar() {
-        JPanel sidebar = new JPanel(null);
-        sidebar.setPreferredSize(new Dimension(230, 0));
-        sidebar.setBackground(AZUL_SIDEBAR);
-
-        JLabel titulo = new JLabel("");
-        titulo.setForeground(AMARILLO);
-        titulo.setFont(new Font("Arial", Font.BOLD, 26));
-        titulo.setBounds(28, 28, 150, 35);
-        sidebar.add(titulo);
-
-        String[] pasos = {
-                "1. Película",
-                "2. Función",
-                "3. Asientos",
-                "4. Pago",
-                "5. Confirmación"
-        };
-
-        int y = 90;
-        for (int i = 0; i < pasos.length; i++) {
-            StepItem item = new StepItem(pasos[i], i == 2);
-            item.setBounds(12, y, 185, 55);
-            sidebar.add(item);
-            y += 62;
-        }
-
-        return sidebar;
     }
 
     private JPanel crearPanelAsientos() {
@@ -598,148 +531,6 @@ public class SeleccionAsientosCINEXGUI extends JFrame {
         lbl.setForeground(BLANCO);
         lbl.setFont(new Font("Arial", Font.BOLD, 16));
         return lbl;
-    }
-
-    private JLabel crearValorPrecioTipo(String texto) {
-        JLabel lbl = new JLabel(texto);
-        lbl.setForeground(AMARILLO);
-        lbl.setFont(new Font("Arial", Font.BOLD, 12));
-        return lbl;
-    }
-
-    private JPanel crearFilaTipoEntrada(PrecioCINEX precio) {
-        JPanel fila = new JPanel(null);
-        fila.setOpaque(false);
-        fila.setMaximumSize(new Dimension(295, 25));
-        fila.setPreferredSize(new Dimension(295, 25));
-
-        String tipo = precio.getTipoEntrada();
-        JLabel lblTipo = crearEtiquetaResumen(tipo);
-        lblTipo.setFont(new Font("Arial", Font.BOLD, 12));
-        lblTipo.setBounds(0, 0, 145, 24);
-        fila.add(lblTipo);
-
-        JSpinner spinner = crearSpinnerTipoEntrada();
-        spinner.setBounds(150, 0, 48, 24);
-        spinner.addChangeListener(e -> ajustarTiposEntradaDinamicos(spinner));
-        fila.add(spinner);
-        spinnersTipoEntrada.put(tipo, spinner);
-
-        JLabel lblPrecio = crearValorPrecioTipo("S/ " + String.format("%.2f", precio.getMonto()));
-        lblPrecio.setBounds(205, 0, 90, 24);
-        fila.add(lblPrecio);
-
-        return fila;
-    }
-
-    private JSpinner crearSpinnerTipoEntrada() {
-        JSpinner spinner = new JSpinner(new SpinnerNumberModel(0, 0, 0, 1));
-        spinner.setFont(new Font("Arial", Font.BOLD, 12));
-        JComponent editor = spinner.getEditor();
-        if (editor instanceof JSpinner.DefaultEditor) {
-            JTextField campo = ((JSpinner.DefaultEditor) editor).getTextField();
-            campo.setHorizontalAlignment(SwingConstants.CENTER);
-            campo.setEditable(false);
-            campo.setBackground(AZUL_PANEL);
-            campo.setForeground(BLANCO);
-        }
-        return spinner;
-    }
-
-    private void ajustarTiposEntradaDinamicos(JSpinner spinnerCambiado) {
-        if (actualizandoTiposEntrada || spinnersTipoEntrada.isEmpty()) return;
-
-        actualizandoTiposEntrada = true;
-        int totalAsientosSeleccionados = asientosSeleccionados.size();
-
-        for (JSpinner spinner : spinnersTipoEntrada.values()) {
-            int valor = Math.min(obtenerValorSpinner(spinner), totalAsientosSeleccionados);
-            setSpinnerSinEvento(spinner, valor, totalAsientosSeleccionados);
-        }
-
-        int suma = sumarSpinnersTipoEntrada();
-
-        if (suma > totalAsientosSeleccionados) {
-            int excedente = suma - totalAsientosSeleccionados;
-            for (JSpinner spinner : spinnersTipoEntrada.values()) {
-                if (spinner == spinnerCambiado) continue;
-                int valor = obtenerValorSpinner(spinner);
-                int quitar = Math.min(valor, excedente);
-                if (quitar > 0) {
-                    setSpinnerSinEvento(spinner, valor - quitar, totalAsientosSeleccionados);
-                    excedente -= quitar;
-                }
-                if (excedente == 0) break;
-            }
-        }
-
-        suma = sumarSpinnersTipoEntrada();
-        if (suma < totalAsientosSeleccionados) {
-            JSpinner spinnerPrincipal = obtenerSpinnerPrincipal();
-            if (spinnerPrincipal != null) {
-                setSpinnerSinEvento(
-                        spinnerPrincipal,
-                        obtenerValorSpinner(spinnerPrincipal) + (totalAsientosSeleccionados - suma),
-                        totalAsientosSeleccionados
-                );
-            }
-        }
-
-        actualizandoTiposEntrada = false;
-        actualizarTextoTiposEntrada();
-        lblTotal.setText("S/ " + String.format("%.2f", calcularTotal()));
-    }
-
-    private void actualizarSpinnersTipoEntrada() {
-        if (spinnersTipoEntrada.isEmpty()) return;
-
-        actualizandoTiposEntrada = true;
-        int totalAsientosSeleccionados = asientosSeleccionados.size();
-
-        for (JSpinner spinner : spinnersTipoEntrada.values()) {
-            int valor = Math.min(obtenerValorSpinner(spinner), totalAsientosSeleccionados);
-            setSpinnerSinEvento(spinner, valor, totalAsientosSeleccionados);
-        }
-
-        int suma = sumarSpinnersTipoEntrada();
-        JSpinner spinnerPrincipal = obtenerSpinnerPrincipal();
-
-        if (totalAsientosSeleccionados == 0) {
-            for (JSpinner spinner : spinnersTipoEntrada.values()) {
-                setSpinnerSinEvento(spinner, 0, 0);
-            }
-        } else if (suma == 0 && spinnerPrincipal != null) {
-            setSpinnerSinEvento(spinnerPrincipal, totalAsientosSeleccionados, totalAsientosSeleccionados);
-        } else if (suma < totalAsientosSeleccionados && spinnerPrincipal != null) {
-            setSpinnerSinEvento(spinnerPrincipal, obtenerValorSpinner(spinnerPrincipal) + (totalAsientosSeleccionados - suma), totalAsientosSeleccionados);
-        } else if (suma > totalAsientosSeleccionados && spinnerPrincipal != null) {
-            setSpinnerSinEvento(spinnerPrincipal, Math.max(0, obtenerValorSpinner(spinnerPrincipal) - (suma - totalAsientosSeleccionados)), totalAsientosSeleccionados);
-        }
-
-        actualizandoTiposEntrada = false;
-        actualizarTextoTiposEntrada();
-    }
-
-    private JSpinner obtenerSpinnerPrincipal() {
-        return spinnersTipoEntrada.isEmpty() ? null : spinnersTipoEntrada.values().iterator().next();
-    }
-
-    private int sumarSpinnersTipoEntrada() {
-        int suma = 0;
-        for (JSpinner spinner : spinnersTipoEntrada.values()) {
-            suma += obtenerValorSpinner(spinner);
-        }
-        return suma;
-    }
-
-    private void actualizarTextoTiposEntrada() {
-        if (lblValidacionTipos == null) return;
-        int total = asientosSeleccionados.size();
-        lblValidacionTipos.setText(total == 0 ? "Seleccione asientos." : "Tipos asignados: " + sumarSpinnersTipoEntrada() + " / " + total);
-    }
-
-    private void setSpinnerSinEvento(JSpinner spinner, int valor, int maximo) {
-        spinner.setModel(new SpinnerNumberModel(Math.max(0, valor), 0, Math.max(0, maximo), 1));
     }
 
     private int obtenerValorSpinner(JSpinner spinner) {

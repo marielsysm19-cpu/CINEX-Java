@@ -12,6 +12,8 @@ public class VentaCINEX {
     private String metodoPago;
     private double total;
     private int entradasVendidas;
+    private String asientos;
+    private String vendedor;
 
     private double montoReembolsado;
     private int entradasReembolsadas;
@@ -68,6 +70,12 @@ public class VentaCINEX {
     public void setEntradasVendidas(int entradasVendidas) {
         this.entradasVendidas = Math.max(0, entradasVendidas);
     }
+
+    public String getAsientos() { return valorSeguro(asientos); }
+    public void setAsientos(String asientos) { this.asientos = valorSeguro(asientos); }
+
+    public String getVendedor() { return valorSeguro(vendedor); }
+    public void setVendedor(String vendedor) { this.vendedor = valorSeguro(vendedor); }
 
     public double getMontoReembolsado() { return montoReembolsado; }
     public void setMontoReembolsado(double montoReembolsado) {

@@ -1,6 +1,8 @@
 package control;
 
 import entidad.EntradaReembolsoCINEX;
+import entidad.FuncionCINEX;
+import entidad.ReembolsoCINEX;
 import entidad.ResumenReembolsosCINEX;
 
 import java.sql.Connection;
@@ -23,12 +25,12 @@ public class ControlReembolsosCINEX {
         ControlModuloReembolsosCINEX.asegurarEstructura();
     }
 
-    public ArrayList<Object[]> listarFuncionesConVentas(
+    public ArrayList<FuncionCINEX> listarFuncionesConVentas(
             String filtro
     ) {
         ControlModuloReembolsosCINEX.asegurarEstructura();
 
-        ArrayList<Object[]> lista = new ArrayList<>();
+        ArrayList<FuncionCINEX> lista = new ArrayList<>();
         String texto = filtro == null ? "" : filtro.trim();
 
         String sql =
@@ -73,16 +75,16 @@ public class ControlReembolsosCINEX {
                                             idFuncion
                                     );
 
-                    lista.add(new Object[]{
-                            idFuncion,
-                            rs.getString("titulo"),
-                            rs.getString("fecha"),
-                            rs.getString("hora"),
-                            rs.getString("sala"),
-                            rs.getString("estado"),
-                            rs.getInt("entradas_historicas"),
-                            autorizacion.getEstado()
-                    });
+                    FuncionCINEX funcion = new FuncionCINEX();
+                    funcion.setIdFuncion(idFuncion);
+                    funcion.setPelicula(rs.getString("titulo"));
+                    funcion.setFechaTexto(rs.getString("fecha"));
+                    funcion.setHoraBD(rs.getString("hora"));
+                    funcion.setSala(rs.getString("sala"));
+                    funcion.setEstado(rs.getString("estado"));
+                    funcion.setVendidos(rs.getInt("entradas_historicas"));
+                    funcion.setAutorizacionReembolso(autorizacion.getEstado());
+                    lista.add(funcion);
                 }
             }
 
@@ -780,12 +782,12 @@ public class ControlReembolsosCINEX {
         return resumen;
     }
 
-    public ArrayList<Object[]> listarUltimosReembolsos(
+    public ArrayList<ReembolsoCINEX> listarUltimosReembolsos(
             int limite
     ) {
         ControlModuloReembolsosCINEX.asegurarEstructura();
 
-        ArrayList<Object[]> lista = new ArrayList<>();
+        ArrayList<ReembolsoCINEX> lista = new ArrayList<>();
 
         String sql =
                 "SELECT r.id_reembolso, "
@@ -826,19 +828,19 @@ public class ControlReembolsosCINEX {
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(new Object[]{
-                            rs.getInt("id_reembolso"),
-                            rs.getString("numero_venta"),
-                            rs.getString("titulo"),
-                            rs.getString("nombre"),
-                            rs.getString("dni"),
-                            rs.getString("asientos"),
-                            rs.getInt("entradas"),
-                            rs.getDouble("monto_total"),
-                            rs.getString("estado_reembolso"),
-                            rs.getString("usuario_taquillero"),
-                            rs.getString("fecha")
-                    });
+                    ReembolsoCINEX reembolso = new ReembolsoCINEX();
+                    reembolso.setIdReembolso(rs.getInt("id_reembolso"));
+                    reembolso.setNumeroVenta(rs.getString("numero_venta"));
+                    reembolso.setPelicula(rs.getString("titulo"));
+                    reembolso.setCliente(rs.getString("nombre"));
+                    reembolso.setDocumento(rs.getString("dni"));
+                    reembolso.setAsientos(rs.getString("asientos"));
+                    reembolso.setEntradas(rs.getInt("entradas"));
+                    reembolso.setMontoTotal(rs.getDouble("monto_total"));
+                    reembolso.setEstado(rs.getString("estado_reembolso"));
+                    reembolso.setUsuarioTaquillero(rs.getString("usuario_taquillero"));
+                    reembolso.setFecha(rs.getString("fecha"));
+                    lista.add(reembolso);
                 }
             }
 

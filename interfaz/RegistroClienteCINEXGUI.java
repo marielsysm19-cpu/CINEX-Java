@@ -17,8 +17,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import control.BDCINEX;
 import control.DocumentoAPI;
+import control.ControlValidarClienteCINEX;
+import entidad.ClienteCINEX;
 
 public class RegistroClienteCINEXGUI extends JFrame {
 
@@ -214,7 +215,7 @@ public class RegistroClienteCINEXGUI extends JFrame {
         txtNombreCliente.setEditable(false);
         txtNombreCliente.setFocusable(false);
         txtNombreCliente.setToolTipText(
-                "El nombre solo se completa desde la base de datos o la consulta de documento."
+                "El nombre se completa automáticamente al consultar el documento."
         );
         formulario.add(txtNombreCliente);
 
@@ -278,15 +279,19 @@ public class RegistroClienteCINEXGUI extends JFrame {
             return;
         }
 
-        String clienteExistente =
-                BDCINEX.buscarClientePorDocumento(tipo, numero);
+        ClienteCINEX clienteExistente = null;
+        try {
+            clienteExistente = ControlValidarClienteCINEX.buscarClientePorDocumento(tipo, numero);
+        } catch (Exception e) {
+            mostrarMensaje("No se pudo consultar el cliente registrado.", ROJO);
+        }
 
         if (clienteExistente != null
-                && !clienteExistente.trim().isEmpty()) {
-            clienteExistente = DocumentoAPI.formatearNombreCliente(
-                    clienteExistente
+                && !clienteExistente.getNombre().trim().isEmpty()) {
+            String nombreCliente = DocumentoAPI.formatearNombreCliente(
+                    clienteExistente.getNombre()
             );
-            txtNombreCliente.setText(clienteExistente);
+            txtNombreCliente.setText(nombreCliente);
 
             documentoValidado = true;
             clienteYaExiste = true;
@@ -415,7 +420,7 @@ public class RegistroClienteCINEXGUI extends JFrame {
             );
             JOptionPane.showMessageDialog(
                     this,
-                    "El documento debe existir en la base de datos o haber sido encontrado por RENIEC/API.",
+                    "El documento debe estar registrado o haber sido encontrado mediante la consulta de documento.",
                     "Validación requerida",
                     JOptionPane.WARNING_MESSAGE
             );
@@ -444,7 +449,8 @@ public class RegistroClienteCINEXGUI extends JFrame {
             return;
         }
 
-        BDCINEX.prepararClienteParaVenta(tipo, numero, nombre);
+        ClienteCINEX clienteVenta = new ClienteCINEX(tipo, numero, nombre);
+        ControlValidarClienteCINEX.prepararClienteParaVenta(clienteVenta);
 
         dispose();
         new VentaEntradasCINEXGUI(usuarioActual).setVisible(true);
